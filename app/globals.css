@@ -51,6 +51,22 @@ body {
   background: #dc2626;
 }
 
+.captcha-section {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.captcha-hint {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.captcha-widget-hidden {
+  display: none;
+}
+
 .loading, .error, .not-found {
   display: flex;
   flex-direction: column;

@@ -5,9 +5,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { sendTestNotification } from './test'
+import { sendServerErrorNotification } from './server-error'
 
 export const notificationHandlers = {
   test: sendTestNotification,
+  'server-error': sendServerErrorNotification,
 } as const
 
 export type NotificationId = keyof typeof notificationHandlers

@@ -6,9 +6,10 @@ import type { NotificationId } from '@/lib/notifications'
 interface Props {
   type: NotificationId
   label: string
+  captchaToken: string
 }
 
-export default function NotifyButton({ type, label }: Props) {
+export default function NotifyButton({ type, label, captchaToken }: Props) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
 
   async function handleClick() {
@@ -17,7 +18,7 @@ export default function NotifyButton({ type, label }: Props) {
       const res = await fetch('/api/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type, captchaToken }),
       })
       setStatus(res.ok ? 'ok' : 'error')
     } catch {
