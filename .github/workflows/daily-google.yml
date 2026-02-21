@@ -11,5 +11,5 @@ jobs:
     steps:
       - name: Send Daily Google Link
         run: |
-          curl -f -X GET "${{ secrets.APP_URL }}/api/cron/daily-link" \
+          curl -f -L -X GET "${{ secrets.APP_URL }}/api/cron/daily-link" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
