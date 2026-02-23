@@ -6,10 +6,12 @@
 
 import { sendTestNotification } from './test'
 import { sendServerErrorNotification } from './server-error'
+import { sendLogTestNotification } from './log-test'
 
 export const notificationHandlers = {
   test: sendTestNotification,
   'server-error': sendServerErrorNotification,
+  'log-test': sendLogTestNotification,
 } as const
 
 export type NotificationId = keyof typeof notificationHandlers

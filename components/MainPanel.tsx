@@ -26,6 +26,11 @@ export default function MainPanel() {
             label="🚨 서버 오류 알림 전송"
             captchaToken={captchaToken}
           />
+          <NotifyButton
+            type="log-test"
+            label="📋 로그 테스트"
+            captchaToken={captchaToken}
+          />
         </section>
       )}
     </>
