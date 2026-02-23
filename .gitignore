@@ -25,6 +25,9 @@ npm-debug.log*
 *.pem
 Thumbs.db
 
+# push logs (local only)
+logs/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
