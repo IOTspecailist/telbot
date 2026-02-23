@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react'
 
 declare global {
   interface Window {
@@ -15,7 +15,14 @@ interface Props {
   onTokenChange: (token: string | null) => void
 }
 
-export default function TurnstileWidget({ onTokenChange }: Props) {
+export interface TurnstileHandle {
+  reset: () => void
+}
+
+const TurnstileWidget = forwardRef<TurnstileHandle, Props>(function TurnstileWidget(
+  { onTokenChange },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
   const callbackRef = useRef(onTokenChange)
@@ -23,6 +30,14 @@ export default function TurnstileWidget({ onTokenChange }: Props) {
   useEffect(() => {
     callbackRef.current = onTokenChange
   })
+
+  useImperativeHandle(ref, () => ({
+    reset() {
+      if (widgetIdRef.current != null && window.turnstile) {
+        window.turnstile.reset(widgetIdRef.current)
+      }
+    },
+  }))
 
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!
@@ -51,4 +66,6 @@ export default function TurnstileWidget({ onTokenChange }: Props) {
   }, [])
 
   return <div ref={containerRef} />
-}
+})
+
+export default TurnstileWidget

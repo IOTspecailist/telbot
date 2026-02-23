@@ -7,9 +7,10 @@ interface Props {
   type: NotificationId
   label: string
   captchaToken: string
+  onAfterSend?: () => void
 }
 
-export default function NotifyButton({ type, label, captchaToken }: Props) {
+export default function NotifyButton({ type, label, captchaToken, onAfterSend }: Props) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
 
   async function handleClick() {
@@ -21,6 +22,7 @@ export default function NotifyButton({ type, label, captchaToken }: Props) {
         body: JSON.stringify({ type, captchaToken }),
       })
       setStatus(res.ok ? 'ok' : 'error')
+      if (res.ok) onAfterSend?.()
     } catch {
       setStatus('error')
     } finally {
