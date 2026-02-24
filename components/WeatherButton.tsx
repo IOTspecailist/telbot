@@ -11,6 +11,13 @@ type Status = 'idle' | 'locating' | 'sending' | 'ok' | 'error'
 
 export default function WeatherButton({ captchaToken, onAfterSend }: Props) {
   const [status, setStatus] = useState<Status>('idle')
+  const [errorMsg, setErrorMsg] = useState<string>('❌ 전송 실패')
+
+  function fail(msg: string) {
+    setErrorMsg(msg)
+    setStatus('error')
+    setTimeout(() => setStatus('idle'), 4000)
+  }
 
   async function handleClick() {
     setStatus('locating')
@@ -22,9 +29,12 @@ export default function WeatherButton({ captchaToken, onAfterSend }: Props) {
       )
       lat = pos.coords.latitude
       lon = pos.coords.longitude
-    } catch {
-      setStatus('error')
-      setTimeout(() => setStatus('idle'), 3000)
+    } catch (e) {
+      const code = (e as GeolocationPositionError).code
+      if (code === 1) fail('❌ 위치 권한이 거부됨')
+      else if (code === 2) fail('❌ 위치를 확인할 수 없음')
+      else if (code === 3) fail('❌ 위치 확인 시간 초과')
+      else fail('❌ 위치 확인 실패')
       return
     }
 
@@ -35,12 +45,15 @@ export default function WeatherButton({ captchaToken, onAfterSend }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lat, lon, captchaToken }),
       })
-      setStatus(res.ok ? 'ok' : 'error')
-      if (res.ok) onAfterSend?.()
+      if (res.ok) {
+        setStatus('ok')
+        onAfterSend?.()
+        setTimeout(() => setStatus('idle'), 3000)
+      } else {
+        fail('❌ 전송 실패')
+      }
     } catch {
-      setStatus('error')
-    } finally {
-      setTimeout(() => setStatus('idle'), 3000)
+      fail('❌ 네트워크 오류')
     }
   }
 
@@ -49,7 +62,7 @@ export default function WeatherButton({ captchaToken, onAfterSend }: Props) {
     locating: '📍 위치 확인 중…',
     sending: '전송 중…',
     ok: '✅ 전송 완료',
-    error: '❌ 전송 실패',
+    error: errorMsg,
   }
 
   return (
