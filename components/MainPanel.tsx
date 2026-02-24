@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import NotifyButton from './NotifyButton'
+import WeatherButton from './WeatherButton'
 import TurnstileWidget, { type TurnstileHandle } from './TurnstileWidget'
 
 export default function MainPanel() {
@@ -40,6 +41,7 @@ export default function MainPanel() {
             captchaToken={captchaToken}
             onAfterSend={handleAfterSend}
           />
+          <WeatherButton captchaToken={captchaToken} onAfterSend={handleAfterSend} />
         </section>
       )}
     </>
