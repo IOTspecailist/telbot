@@ -52,16 +52,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 })
   }
 
-  if (!article) {
-    await sendTelegramMessage(
-      `🔍 <b>[${source.name}]</b> "${escapeHtml(keyword)}" 관련 최근 3일 기사 없음`
-    )
-    return NextResponse.json({ ok: true, found: false })
-  }
+  try {
+    if (!article) {
+      await sendTelegramMessage(
+        `🔍 <b>[${source.name}]</b> "${escapeHtml(keyword)}" 관련 최근 3일 기사 없음`
+      )
+      return NextResponse.json({ ok: true, found: false })
+    }
 
-  await sendTelegramMessage(
-    `📰 <b>[${source.name}]</b> "${escapeHtml(keyword)}" 최신 기사\n\n` +
-      `${escapeHtml(article.title)}\n${article.link}`
-  )
-  return NextResponse.json({ ok: true, found: true })
+    await sendTelegramMessage(
+      `📰 <b>[${source.name}]</b> "${escapeHtml(keyword)}" 최신 기사\n\n` +
+        `${escapeHtml(article.title)}\n${escapeHtml(article.link)}`
+    )
+    return NextResponse.json({ ok: true, found: true })
+  } catch (e) {
+    console.error('[send-news] sendTelegramMessage error:', e)
+    return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 })
+  }
 }
