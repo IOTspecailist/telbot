@@ -67,6 +67,28 @@ body {
   display: none;
 }
 
+.notify-btn[data-status='not-found'] {
+  background: #d97706;
+}
+
+.news-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.news-input {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 180px;
+}
+
+.news-input:disabled {
+  opacity: 0.6;
+}
+
 .loading, .error, .not-found {
   display: flex;
   flex-direction: column;

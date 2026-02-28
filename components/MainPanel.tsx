@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import NotifyButton from './NotifyButton'
 import WeatherButton from './WeatherButton'
+import NewsButton from './NewsButton'
 import TurnstileWidget, { type TurnstileHandle } from './TurnstileWidget'
 
 export default function MainPanel() {
@@ -42,6 +43,12 @@ export default function MainPanel() {
             onAfterSend={handleAfterSend}
           />
           <WeatherButton captchaToken={captchaToken} onAfterSend={handleAfterSend} />
+          <NewsButton
+            siteId="hankyung"
+            label="한국경제"
+            captchaToken={captchaToken}
+            onAfterSend={handleAfterSend}
+          />
         </section>
       )}
     </>
