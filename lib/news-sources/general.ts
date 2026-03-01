@@ -33,7 +33,7 @@ function parseItems(xml: string): Article[] {
 
 export const general: NewsSource = {
   id: 'general',
-  name: '국내뉴스',
+  name: '구글뉴스',
   async fetchLatest(keyword, fromDate) {
     const url = `${GOOGLE_NEWS_SEARCH}?q=${encodeURIComponent(keyword)}&hl=ko&gl=KR&ceid=KR:ko`
     const res = await fetch(url, { cache: 'no-store' })
