@@ -60,8 +60,7 @@ export async function POST(req: NextRequest) {
     } else if (!article) {
       lines.push('최근 3일 기사 없음')
     } else {
-      lines.push(escapeHtml(article.title))
-      lines.push(escapeHtml(article.link))
+      lines.push(`<a href="${article.link}">${escapeHtml(article.title)}</a>`)
       anyFound = true
     }
   }
