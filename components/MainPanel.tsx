@@ -44,8 +44,7 @@ export default function MainPanel() {
           />
           <WeatherButton captchaToken={captchaToken} onAfterSend={handleAfterSend} />
           <NewsButton
-            siteId="hankyung"
-            label="한국경제"
+            label="뉴스 검색"
             captchaToken={captchaToken}
             onAfterSend={handleAfterSend}
           />

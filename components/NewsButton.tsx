@@ -3,7 +3,6 @@
 import { useState } from 'react'
 
 interface Props {
-  siteId: string
   label: string
   captchaToken: string
   onAfterSend?: () => void
@@ -11,7 +10,7 @@ interface Props {
 
 type Status = 'idle' | 'sending' | 'ok' | 'not-found' | 'error'
 
-export default function NewsButton({ siteId, label, captchaToken, onAfterSend }: Props) {
+export default function NewsButton({ label, captchaToken, onAfterSend }: Props) {
   const [status, setStatus] = useState<Status>('idle')
   const [keyword, setKeyword] = useState('')
 
@@ -22,7 +21,7 @@ export default function NewsButton({ siteId, label, captchaToken, onAfterSend }:
       const res = await fetch('/api/send-news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, siteId, captchaToken }),
+        body: JSON.stringify({ keyword, captchaToken }),
       })
       const data = await res.json()
       if (!res.ok) {

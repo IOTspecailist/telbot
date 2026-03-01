@@ -5,11 +5,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { hankyung } from './hankyung'
+import { general } from './general'
 
 export interface Article {
   title: string
   link: string
   pubDate: Date
+  source?: string // 실제 언론사명 (예: '연합뉴스')
 }
 
 export interface NewsSource {
@@ -21,4 +23,5 @@ export interface NewsSource {
 
 export const NEWS_SOURCES: Record<string, NewsSource> = {
   hankyung,
+  general,
 }
