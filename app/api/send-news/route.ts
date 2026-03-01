@@ -38,36 +38,29 @@ export async function POST(req: NextRequest) {
   const fromDate = new Date()
   fromDate.setDate(fromDate.getDate() - 3)
 
-  const sources = Object.values(NEWS_SOURCES)
-  const results = await Promise.allSettled(
-    sources.map(s => s.fetchLatest(keyword.trim(), fromDate))
-  )
+  const source = NEWS_SOURCES.general
+  let articles
+  try {
+    articles = await source.fetchTop(keyword.trim(), fromDate, 5)
+  } catch (e) {
+    console.error('[send-news] fetchTop error:', e)
+    return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 })
+  }
+
+  if (articles.length === 0) {
+    return NextResponse.json({ ok: true, found: false })
+  }
 
   const lines: string[] = [`📰 <b>"${escapeHtml(keyword)}" 최신 기사</b>`]
-  let anyFound = false
-
-  for (let i = 0; i < sources.length; i++) {
-    const source = sources[i]
-    const result = results[i]
-    const article = result.status === 'fulfilled' ? result.value : null
-    const displayName = article?.source ?? source.name
-
-    lines.push(`\n🔹 <b>${escapeHtml(displayName)}</b>`)
-
-    if (result.status === 'rejected') {
-      console.error(`[send-news] ${source.id} fetchLatest error:`, result.reason)
-      lines.push('조회 실패')
-    } else if (!article) {
-      lines.push('최근 3일 기사 없음')
-    } else {
-      lines.push(`<a href="${article.link}">${escapeHtml(article.title)}</a>`)
-      anyFound = true
-    }
-  }
+  articles.forEach((a, i) => {
+    const publisher = escapeHtml(a.source ?? '')
+    const title = escapeHtml(a.title)
+    lines.push(`${i + 1}. ${publisher ? `${publisher} · ` : ''}<a href="${a.link}">${title}</a>`)
+  })
 
   try {
     await sendTelegramMessage(lines.join('\n'))
-    return NextResponse.json({ ok: true, found: anyFound })
+    return NextResponse.json({ ok: true, found: true })
   } catch (e) {
     console.error('[send-news] sendTelegramMessage error:', e)
     return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 })

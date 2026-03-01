@@ -16,8 +16,6 @@ function parseItems(xml: string): Article[] {
   while ((match = itemRegex.exec(xml)) !== null) {
     const raw = match[1]
     const source = extractTag(raw, 'source')
-    // 한국경제 기사는 hankyung 소스에서 담당
-    if (source === '한국경제') continue
     // 제목 끝의 " - 출처명" 제거
     const title = extractTag(raw, 'title').replace(/\s*-\s*[^-]+$/, '').trim()
     const link = extractTag(raw, 'link') || extractTag(raw, 'guid')
@@ -34,16 +32,14 @@ function parseItems(xml: string): Article[] {
 export const general: NewsSource = {
   id: 'general',
   name: '구글뉴스',
-  async fetchLatest(keyword, fromDate) {
+  async fetchTop(keyword, fromDate, limit) {
     const url = `${GOOGLE_NEWS_SEARCH}?q=${encodeURIComponent(keyword)}&hl=ko&gl=KR&ceid=KR:ko`
     const res = await fetch(url, { cache: 'no-store' })
-    if (!res.ok) throw new Error(`News search failed: ${res.status}`)
+    if (!res.ok) throw new Error(`RSS fetch failed: ${res.status}`)
     const xml = await res.text()
-    const items = parseItems(xml)
-    return (
-      items
-        .filter(a => a.pubDate >= fromDate)
-        .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime())[0] ?? null
-    )
+    return parseItems(xml)
+      .filter(a => a.pubDate >= fromDate)
+      .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime())
+      .slice(0, limit)
   },
 }
