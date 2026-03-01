@@ -1,6 +1,7 @@
 import type { NewsSource, Article } from '.'
 
-const RSS_URL = 'https://www.hankyung.com/feed/all-news'
+// 한경 RSS 직접 접근이 Vercel IP에서 403 차단됨 → Google News 검색으로 대체
+const GOOGLE_NEWS_SEARCH = 'https://news.google.com/rss/search'
 
 function extractTag(xml: string, tag: string): string {
   const cdata = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`).exec(xml)
@@ -9,22 +10,14 @@ function extractTag(xml: string, tag: string): string {
   return plain?.[1]?.trim() ?? ''
 }
 
-function decodeHtmlEntities(s: string): string {
-  return s
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-}
-
 function parseItems(xml: string): Article[] {
   const items: Article[] = []
   const itemRegex = /<item>([\s\S]*?)<\/item>/g
   let match
   while ((match = itemRegex.exec(xml)) !== null) {
     const raw = match[1]
-    const title = decodeHtmlEntities(extractTag(raw, 'title'))
+    // Google News 제목 끝의 " - 한국경제" 제거
+    const title = extractTag(raw, 'title').replace(/\s*-\s*한국경제\s*$/, '').trim()
     const link = extractTag(raw, 'link') || extractTag(raw, 'guid')
     const pubDate = extractTag(raw, 'pubDate')
     if (!title || !link || !pubDate) continue
@@ -40,19 +33,14 @@ export const hankyung: NewsSource = {
   id: 'hankyung',
   name: '한국경제',
   async fetchLatest(keyword, fromDate) {
-    const res = await fetch(RSS_URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        Accept: 'application/rss+xml, application/xml, text/xml, */*',
-      },
-      cache: 'no-store',
-    })
-    if (!res.ok) throw new Error(`RSS fetch failed: ${res.status}`)
+    const url = `${GOOGLE_NEWS_SEARCH}?q=${encodeURIComponent(keyword)}+site:hankyung.com&hl=ko&gl=KR&ceid=KR:ko`
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) throw new Error(`News search failed: ${res.status}`)
     const xml = await res.text()
     const items = parseItems(xml)
     return (
       items
-        .filter(a => a.title.includes(keyword) && a.pubDate >= fromDate)
+        .filter(a => a.pubDate >= fromDate)
         .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime())[0] ?? null
     )
   },
