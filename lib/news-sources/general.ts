@@ -37,8 +37,9 @@ export const general: NewsSource = {
     const res = await fetch(url, { cache: 'no-store' })
     if (!res.ok) throw new Error(`RSS fetch failed: ${res.status}`)
     const xml = await res.text()
+    const kw = keyword.toLowerCase()
     return parseItems(xml)
-      .filter(a => a.pubDate >= fromDate)
+      .filter(a => a.pubDate >= fromDate && a.title.toLowerCase().includes(kw))
       .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime())
       .slice(0, limit)
   },
