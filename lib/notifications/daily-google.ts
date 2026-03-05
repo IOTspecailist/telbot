@@ -10,17 +10,27 @@ const WMO_CODES: Record<number, string> = {
   95: '뇌우', 96: '뇌우', 99: '뇌우',
 }
 
+function dustGrade(pm10: number, pm25: number): string {
+  const grade = (val: number, thresholds: number[]) =>
+    val <= thresholds[0] ? '좋음' : val <= thresholds[1] ? '보통' : val <= thresholds[2] ? '나쁨' : '매우나쁨'
+  return `PM10 ${pm10}㎍(${grade(pm10, [30, 80, 150])}) / PM2.5 ${pm25}㎍(${grade(pm25, [15, 35, 75])})`
+}
+
 export async function fetchSeoulWeather(): Promise<string> {
   try {
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&timezone=Asia/Seoul'
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
-    const data = await res.json()
-    const c = data.current
+    const [weatherRes, airRes] = await Promise.all([
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&timezone=Asia/Seoul', { signal: AbortSignal.timeout(5000) }),
+      fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=37.5665&longitude=126.9780&current=pm10,pm2_5&timezone=Asia/Seoul', { signal: AbortSignal.timeout(5000) }),
+    ])
+    const [weather, air] = await Promise.all([weatherRes.json(), airRes.json()])
+    const c = weather.current
     const desc = WMO_CODES[c.weather_code] ?? '알 수 없음'
     const temp = Math.round(c.temperature_2m)
     const feelsLike = Math.round(c.apparent_temperature)
     const humidity = c.relative_humidity_2m
-    return `🌤 <b>서울 날씨</b>: ${desc} ${temp}°C (체감 ${feelsLike}°C) 💧${humidity}%\n`
+    const pm10 = Math.round(air.current.pm10)
+    const pm25 = Math.round(air.current.pm2_5)
+    return `🌤 <b>서울 날씨</b>: ${desc} ${temp}°C (체감 ${feelsLike}°C) 💧${humidity}%\n🌫 <b>미세먼지</b>: ${dustGrade(pm10, pm25)}\n`
   } catch {
     return ''
   }
