@@ -1,3 +1,4 @@
+import KoreanLunarCalendar from 'korean-lunar-calendar'
 import { sendTelegramMessage } from '../telegram'
 
 const WMO_CODES: Record<number, string> = {
@@ -30,10 +31,22 @@ export async function fetchSeoulWeather(): Promise<string> {
     const humidity = c.relative_humidity_2m
     const pm10 = Math.round(air.current.pm10)
     const pm25 = Math.round(air.current.pm2_5)
-    return `🌤 <b>서울 날씨</b>: ${desc} ${temp}°C (체감 ${feelsLike}°C) 💧${humidity}%\n🌫 <b>미세먼지</b>: ${dustGrade(pm10, pm25)}\n`
+    return `🌤 <b>서울 날씨</b>: ${desc} ${temp}°C (체감 ${feelsLike}°C) 💧${humidity}%\n🌫 ${dustGrade(pm10, pm25)}\n`
   } catch {
     return ''
   }
+}
+
+export function getLunarDateMessage(): string {
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+  const y = now.getFullYear()
+  const m = now.getMonth() + 1
+  const d = now.getDate()
+  const cal = new KoreanLunarCalendar()
+  cal.setSolarDate(y, m, d)
+  const lunar = cal.getLunarCalendar()
+  const intercalation = lunar.intercalation ? ' (윤달)' : ''
+  return `🌙 음력 ${lunar.year}년 ${lunar.month}월 ${lunar.day}일${intercalation}\n`
 }
 
 const COUNTRIES = [
@@ -50,26 +63,17 @@ async function fetchTrends(geo: string): Promise<string[]> {
   const res = await fetch(`https://trends.google.com/trending/rss?geo=${geo}`)
   const xml = await res.text()
 
-  // CDATA 형식 파싱
   const cdataMatches = [...xml.matchAll(/<item>[\s\S]*?<title><!\[CDATA\[(.+?)\]\]><\/title>/g)]
   if (cdataMatches.length > 0) {
     return cdataMatches.slice(0, 3).map(m => m[1])
   }
 
-  // fallback: 일반 title 태그
   const itemMatches = [...xml.matchAll(/<item>[\s\S]*?<title>(.+?)<\/title>/g)]
   return itemMatches.slice(0, 3).map(m => m[1].trim())
 }
 
-export async function sendDailyGoogleLink(): Promise<void> {
-  const today = new Date().toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric',
-    timeZone: 'Asia/Seoul',
-  })
-
-  const weather = await fetchSeoulWeather()
-  let message = `${weather}\n📊 <b>구글 트렌드 TOP 3</b> (${today})\n`
-
+async function buildTrendsMessage(today: string): Promise<string> {
+  let message = `📊 <b>구글 트렌드 TOP 3</b> (${today})\n`
   for (const country of COUNTRIES) {
     const trends = await fetchTrends(country.code)
     message += `\n${country.flag} <b>${country.name}</b>\n`
@@ -78,6 +82,29 @@ export async function sendDailyGoogleLink(): Promise<void> {
       message += `${i + 1}. <a href="${searchUrl}">${keyword}</a>\n`
     })
   }
+  return message
+}
 
+export async function sendTrendsOnly(): Promise<void> {
+  const today = new Date().toLocaleDateString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: 'Asia/Seoul',
+  })
+  const message = await buildTrendsMessage(today)
   await sendTelegramMessage(message)
+}
+
+export async function sendDailyGoogleLink(): Promise<void> {
+  const today = new Date().toLocaleDateString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: 'Asia/Seoul',
+  })
+
+  const [weather, trends] = await Promise.all([
+    fetchSeoulWeather(),
+    buildTrendsMessage(today),
+  ])
+  const lunar = getLunarDateMessage()
+
+  await sendTelegramMessage(`${weather}${lunar}\n${trends}`)
 }

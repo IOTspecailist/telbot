@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendDailyGoogleLink } from '@/lib/notifications/daily-google'
+import { sendTrendsOnly } from '@/lib/notifications/daily-google'
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await sendDailyGoogleLink()
+    await sendTrendsOnly()
     return NextResponse.json({ ok: true })
   } catch (e) {
     console.error('[send-trends] error:', e)

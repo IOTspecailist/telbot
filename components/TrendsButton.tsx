@@ -30,7 +30,7 @@ export default function TrendsButton({ captchaToken, onAfterSend }: Props) {
   }
 
   const btnLabel: Record<Status, string> = {
-    idle: '📊 구글 트렌드 TOP5 전송',
+    idle: '📊 구글 트렌드 TOP3 전송',
     sending: '가져오는 중…',
     ok: '✅ 전송 완료',
     error: '❌ 오류',
