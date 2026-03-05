@@ -15,8 +15,6 @@ async function verifyTurnstile(token: string): Promise<boolean> {
   return data.success === true
 }
 
-const LUNAR_MONTHS = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月']
-const KO_MONTHS = ['정월','이월','삼월','사월','오월','유월','칠월','팔월','구월','시월','동월','섣달']
 
 export async function POST(req: NextRequest) {
   const { captchaToken } = await req.json()
@@ -39,9 +37,8 @@ export async function POST(req: NextRequest) {
   cal.setSolarDate(y, m, d)
   const lunar = cal.getLunarCalendar()
 
-  const monthKo = KO_MONTHS[lunar.month - 1]
-  const intercalation = lunar.intercalation ? '(윤달) ' : ''
-  const message = `🌙 <b>오늘의 음력</b>\n양력 ${y}년 ${m}월 ${d}일\n음력 ${lunar.year}년 ${intercalation}${monthKo} ${lunar.day}일`
+  const intercalation = lunar.intercalation ? ' (윤달)' : ''
+  const message = `🌙 <b>오늘의 음력</b>\n양력 ${y}년 ${m}월 ${d}일\n음력 ${lunar.year}년 ${lunar.month}월 ${lunar.day}일${intercalation}`
 
   await sendTelegramMessage(message)
   return NextResponse.json({ ok: true })
