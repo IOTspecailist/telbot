@@ -13,7 +13,7 @@ const WMO_CODES: Record<number, string> = {
 function dustGrade(pm10: number, pm25: number): string {
   const grade = (val: number, thresholds: number[]) =>
     val <= thresholds[0] ? '좋음' : val <= thresholds[1] ? '보통' : val <= thresholds[2] ? '나쁨' : '매우나쁨'
-  return `PM10 ${pm10}㎍(${grade(pm10, [30, 80, 150])}) / PM2.5 ${pm25}㎍(${grade(pm25, [15, 35, 75])})`
+  return `미세먼지 ${pm10}㎍(${grade(pm10, [30, 80, 150])}) / 초미세먼지 ${pm25}㎍(${grade(pm25, [15, 35, 75])})`
 }
 
 export async function fetchSeoulWeather(): Promise<string> {
