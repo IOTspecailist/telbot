@@ -1,17 +1,26 @@
 import { sendTelegramMessage } from '../telegram'
 
+const WMO_CODES: Record<number, string> = {
+  0: '맑음', 1: '대체로 맑음', 2: '구름 조금', 3: '흐림',
+  45: '안개', 48: '안개',
+  51: '이슬비', 53: '이슬비', 55: '이슬비',
+  61: '비', 63: '비', 65: '강한 비',
+  71: '눈', 73: '눈', 75: '강한 눈',
+  80: '소나기', 81: '소나기', 82: '강한 소나기',
+  95: '뇌우', 96: '뇌우', 99: '뇌우',
+}
+
 export async function fetchSeoulWeather(): Promise<string> {
   try {
-    const res = await fetch('https://wttr.in/Seoul?format=j1', {
-      headers: { 'User-Agent': 'curl/7.68.0' },
-    })
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&timezone=Asia/Seoul'
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
     const data = await res.json()
-    const current = data.current_condition[0]
-    const tempC = current.temp_C
-    const desc = current.lang_ko?.[0]?.value ?? current.weatherDesc[0].value
-    const humidity = current.humidity
-    const feelsLike = current.FeelsLikeC
-    return `🌤 <b>서울 날씨</b>: ${desc} ${tempC}°C (체감 ${feelsLike}°C) 💧${humidity}%\n`
+    const c = data.current
+    const desc = WMO_CODES[c.weather_code] ?? '알 수 없음'
+    const temp = Math.round(c.temperature_2m)
+    const feelsLike = Math.round(c.apparent_temperature)
+    const humidity = c.relative_humidity_2m
+    return `🌤 <b>서울 날씨</b>: ${desc} ${temp}°C (체감 ${feelsLike}°C) 💧${humidity}%\n`
   } catch {
     return ''
   }
