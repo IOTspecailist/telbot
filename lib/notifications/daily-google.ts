@@ -1,5 +1,22 @@
 import { sendTelegramMessage } from '../telegram'
 
+export async function fetchSeoulWeather(): Promise<string> {
+  try {
+    const res = await fetch('https://wttr.in/Seoul?format=j1', {
+      headers: { 'User-Agent': 'curl/7.68.0' },
+    })
+    const data = await res.json()
+    const current = data.current_condition[0]
+    const tempC = current.temp_C
+    const desc = current.lang_ko?.[0]?.value ?? current.weatherDesc[0].value
+    const humidity = current.humidity
+    const feelsLike = current.FeelsLikeC
+    return `🌤 <b>서울 날씨</b>: ${desc} ${tempC}°C (체감 ${feelsLike}°C) 💧${humidity}%\n`
+  } catch {
+    return ''
+  }
+}
+
 const COUNTRIES = [
   { code: 'IN', flag: '🇮🇳', name: '인도' },
   { code: 'US', flag: '🇺🇸', name: '미국' },
@@ -17,12 +34,12 @@ async function fetchTrends(geo: string): Promise<string[]> {
   // CDATA 형식 파싱
   const cdataMatches = [...xml.matchAll(/<item>[\s\S]*?<title><!\[CDATA\[(.+?)\]\]><\/title>/g)]
   if (cdataMatches.length > 0) {
-    return cdataMatches.slice(0, 5).map(m => m[1])
+    return cdataMatches.slice(0, 3).map(m => m[1])
   }
 
   // fallback: 일반 title 태그
   const itemMatches = [...xml.matchAll(/<item>[\s\S]*?<title>(.+?)<\/title>/g)]
-  return itemMatches.slice(0, 5).map(m => m[1].trim())
+  return itemMatches.slice(0, 3).map(m => m[1].trim())
 }
 
 export async function sendDailyGoogleLink(): Promise<void> {
@@ -31,7 +48,8 @@ export async function sendDailyGoogleLink(): Promise<void> {
     timeZone: 'Asia/Seoul',
   })
 
-  let message = `📊 <b>구글 트렌드 TOP 5</b> (${today})\n`
+  const weather = await fetchSeoulWeather()
+  let message = `${weather}\n📊 <b>구글 트렌드 TOP 3</b> (${today})\n`
 
   for (const country of COUNTRIES) {
     const trends = await fetchTrends(country.code)
