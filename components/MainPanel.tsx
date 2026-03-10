@@ -7,6 +7,7 @@ import NewsButton from './NewsButton'
 import TrendsButton from './TrendsButton'
 import SeoulWeatherButton from './SeoulWeatherButton'
 import LunarButton from './LunarButton'
+import XTrendsButton from './XTrendsButton'
 import TurnstileWidget, { type TurnstileHandle } from './TurnstileWidget'
 import { NEWS_SOURCES } from '@/lib/news-sources'
 
@@ -53,6 +54,7 @@ export default function MainPanel() {
             <TrendsButton captchaToken={captchaToken} onAfterSend={handleAfterSend} />
             <SeoulWeatherButton captchaToken={captchaToken} onAfterSend={handleAfterSend} />
             <LunarButton captchaToken={captchaToken} onAfterSend={handleAfterSend} />
+            <XTrendsButton captchaToken={captchaToken} onAfterSend={handleAfterSend} />
           </section>
 
           <section className="news-section">
