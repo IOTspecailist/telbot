@@ -1,5 +1,6 @@
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import { sendTelegramMessage } from '../telegram'
+import { buildXTrendsMessage } from './x-trends'
 
 const WMO_CODES: Record<number, string> = {
   0: '맑음', 1: '대체로 맑음', 2: '구름 조금', 3: '흐림',
@@ -100,11 +101,12 @@ export async function sendDailyGoogleLink(): Promise<void> {
     timeZone: 'Asia/Seoul',
   })
 
-  const [weather, trends] = await Promise.all([
+  const [weather, trends, xTrends] = await Promise.all([
     fetchSeoulWeather(),
     buildTrendsMessage(today),
+    buildXTrendsMessage().catch(() => ''),
   ])
   const lunar = getLunarDateMessage()
 
-  await sendTelegramMessage(`${weather}${lunar}\n${trends}`)
+  await sendTelegramMessage(`${weather}${lunar}\n${trends}\n${xTrends}`)
 }

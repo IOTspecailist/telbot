@@ -17,6 +17,23 @@ async function fetchXTrends(): Promise<string[]> {
   return items.slice(0, 10).map(m => m[1].trim()).filter(Boolean)
 }
 
+export async function buildXTrendsMessage(): Promise<string> {
+  const trends = await fetchXTrends()
+  if (trends.length === 0) return ''
+
+  const today = new Date().toLocaleDateString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: 'Asia/Seoul',
+  })
+
+  let message = `🐦 <b>X 트렌드 TOP 10</b> (${today})\n`
+  trends.forEach((topic, i) => {
+    const url = `https://x.com/search?q=${encodeURIComponent(topic)}&src=trend_click`
+    message += `${i + 1}. <a href="${url}">${topic}</a>\n`
+  })
+  return message
+}
+
 export async function sendXTrends(): Promise<void> {
   const trends = await fetchXTrends()
   if (trends.length === 0) throw new Error('트렌드를 가져올 수 없습니다')
@@ -26,7 +43,7 @@ export async function sendXTrends(): Promise<void> {
     timeZone: 'Asia/Seoul',
   })
 
-  let message = `🐦 <b>X(트위터) 한국 트렌드 TOP 10</b> (${today})\n\n`
+  let message = `🐦 <b>X(트위터) 한국 트렌드 TOP 10</b> (${today})\n`
   trends.forEach((topic, i) => {
     const url = `https://x.com/search?q=${encodeURIComponent(topic)}&src=trend_click`
     message += `${i + 1}. <a href="${url}">${topic}</a>\n`
