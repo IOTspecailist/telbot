@@ -1,14 +1,14 @@
 import { sendTelegramMessage } from '../telegram'
 
 async function fetchXTrends(): Promise<string[]> {
-  const res = await fetch('https://trends24.in/south-korea/', {
+  const res = await fetch('https://trends24.in/korea/', {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TrendBot/1.0)' },
     signal: AbortSignal.timeout(8000),
   })
   const html = await res.text()
 
   // trends24.in: trend items are in <a> tags inside .trend-card__list li elements
-  const matches = [...html.matchAll(/<ol[^>]*class="[^"]*trend-card__list[^"]*"[^>]*>([\s\S]*?)<\/ol>/g)]
+  const matches = [...html.matchAll(/<ol[^>]*class=["']?[^"'>]*trend-card__list[^"'>]*["']?[^>]*>([\s\S]*?)<\/ol>/g)]
   if (matches.length === 0) throw new Error('트렌드 파싱 실패')
 
   // First ol is the most recent (current hour)
