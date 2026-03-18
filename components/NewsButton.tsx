@@ -38,11 +38,11 @@ export default function NewsButton({ label, captchaToken, onAfterSend }: Props) 
   }
 
   const btnLabel: Record<Status, string> = {
-    idle: `📰 ${label}`,
+    idle: label,
     sending: '검색 중…',
-    ok: '✅ 전송 완료',
-    'not-found': '⚠️ 기사 없음',
-    error: '❌ 오류',
+    ok: '전송 완료',
+    'not-found': '기사 없음',
+    error: '오류',
   }
 
   return (

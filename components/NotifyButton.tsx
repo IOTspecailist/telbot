@@ -33,8 +33,8 @@ export default function NotifyButton({ type, label, captchaToken, onAfterSend }:
   const label_map = {
     idle: label,
     sending: '전송 중…',
-    ok: '✅ 전송 완료',
-    error: '❌ 전송 실패',
+    ok: '전송 완료',
+    error: '전송 실패',
   }
 
   return (

@@ -30,10 +30,10 @@ export default function LunarButton({ captchaToken, onAfterSend }: Props) {
   }
 
   const btnLabel: Record<Status, string> = {
-    idle: '🌙 오늘 음력 전송',
+    idle: '오늘 음력 전송',
     sending: '변환 중…',
-    ok: '✅ 전송 완료',
-    error: '❌ 오류',
+    ok: '전송 완료',
+    error: '오류',
   }
 
   return (

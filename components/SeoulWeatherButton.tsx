@@ -30,10 +30,10 @@ export default function SeoulWeatherButton({ captchaToken, onAfterSend }: Props)
   }
 
   const btnLabel: Record<Status, string> = {
-    idle: '🌤 서울 날씨 전송',
+    idle: '서울 날씨 전송',
     sending: '가져오는 중…',
-    ok: '✅ 전송 완료',
-    error: '❌ 오류',
+    ok: '전송 완료',
+    error: '오류',
   }
 
   return (

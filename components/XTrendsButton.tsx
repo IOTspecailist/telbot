@@ -30,10 +30,10 @@ export default function XTrendsButton({ captchaToken, onAfterSend }: Props) {
   }
 
   const btnLabel: Record<Status, string> = {
-    idle: '🐦 X 트렌드 TOP10 전송',
+    idle: 'X 트렌드 TOP10 전송',
     sending: '가져오는 중…',
-    ok: '✅ 전송 완료',
-    error: '❌ 오류',
+    ok: '전송 완료',
+    error: '오류',
   }
 
   return (

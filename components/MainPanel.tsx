@@ -36,7 +36,7 @@ export default function MainPanel() {
           <section className="notify-section">
             <span className="panel-section-label">페이지</span>
             <Link href="/trends" className="notify-btn notify-btn-nav">
-              📈 실시간 급상승 트렌드
+              실시간 급상승 트렌드
             </Link>
           </section>
 
@@ -44,19 +44,19 @@ export default function MainPanel() {
             <span className="panel-section-label">텔레그램 발송</span>
             <NotifyButton
               type="test"
-              label="🧪 테스트 알림 전송"
+              label="테스트 알림 전송"
               captchaToken={captchaToken}
               onAfterSend={handleAfterSend}
             />
             <NotifyButton
               type="server-error"
-              label="🚨 서버 오류 알림 전송"
+              label="서버 오류 알림 전송"
               captchaToken={captchaToken}
               onAfterSend={handleAfterSend}
             />
             <NotifyButton
               type="log-test"
-              label="📋 로그 테스트"
+              label="로그 테스트"
               captchaToken={captchaToken}
               onAfterSend={handleAfterSend}
             />

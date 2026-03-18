@@ -11,7 +11,7 @@ type Status = 'idle' | 'locating' | 'sending' | 'ok' | 'error'
 
 export default function WeatherButton({ captchaToken, onAfterSend }: Props) {
   const [status, setStatus] = useState<Status>('idle')
-  const [errorMsg, setErrorMsg] = useState<string>('❌ 전송 실패')
+  const [errorMsg, setErrorMsg] = useState<string>('전송 실패')
 
   function fail(msg: string) {
     setErrorMsg(msg)
@@ -31,10 +31,10 @@ export default function WeatherButton({ captchaToken, onAfterSend }: Props) {
       lon = pos.coords.longitude
     } catch (e) {
       const code = (e as GeolocationPositionError).code
-      if (code === 1) fail('❌ 위치 권한이 거부됨')
-      else if (code === 2) fail('❌ 위치를 확인할 수 없음')
-      else if (code === 3) fail('❌ 위치 확인 시간 초과')
-      else fail('❌ 위치 확인 실패')
+      if (code === 1) fail('위치 권한이 거부됨')
+      else if (code === 2) fail('위치를 확인할 수 없음')
+      else if (code === 3) fail('위치 확인 시간 초과')
+      else fail('위치 확인 실패')
       return
     }
 
@@ -50,18 +50,18 @@ export default function WeatherButton({ captchaToken, onAfterSend }: Props) {
         onAfterSend?.()
         setTimeout(() => setStatus('idle'), 3000)
       } else {
-        fail('❌ 전송 실패')
+        fail('전송 실패')
       }
     } catch {
-      fail('❌ 네트워크 오류')
+      fail('네트워크 오류')
     }
   }
 
   const label_map: Record<Status, string> = {
-    idle: '🌤️ 현재 날씨 전송',
-    locating: '📍 위치 확인 중…',
+    idle: '현재 날씨 전송',
+    locating: '위치 확인 중…',
     sending: '전송 중…',
-    ok: '✅ 전송 완료',
+    ok: '전송 완료',
     error: errorMsg,
   }
 
