@@ -49,6 +49,11 @@ interface CommunityApiResponse {
   fetchedAt: string
 }
 
+interface XApiResponse {
+  data: string[]
+  fetchedAt: string
+}
+
 function directionMark(direction: string, delta: number) {
   if (direction === 'up') return <span className="zum-up">▲ {Math.abs(delta)}</span>
   if (direction === 'down') return <span className="zum-down">▼ {Math.abs(delta)}</span>
@@ -65,11 +70,14 @@ export default function TrendsPage() {
   const [google, setGoogle] = useState<GoogleApiResponse | null>(null)
   const [zum, setZum] = useState<ZumApiResponse | null>(null)
   const [community, setCommunity] = useState<CommunityApiResponse | null>(null)
+  const [xTrends, setXTrends] = useState<XApiResponse | null>(null)
   const [googleLoading, setGoogleLoading] = useState(true)
   const [zumLoading, setZumLoading] = useState(true)
   const [communityLoading, setCommunityLoading] = useState(true)
+  const [xLoading, setXLoading] = useState(true)
   const [googleError, setGoogleError] = useState(false)
   const [zumError, setZumError] = useState(false)
+  const [xError, setXError] = useState(false)
 
   const loadGoogle = useCallback(async () => {
     setGoogleLoading(true)
@@ -112,19 +120,35 @@ export default function TrendsPage() {
     }
   }, [])
 
+  const loadXTrends = useCallback(async () => {
+    setXLoading(true)
+    setXError(false)
+    try {
+      const res = await fetch('/api/x-trends-live')
+      if (!res.ok) throw new Error()
+      setXTrends(await res.json())
+    } catch {
+      setXError(true)
+    } finally {
+      setXLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     loadGoogle()
     loadZum()
     loadCommunity()
-  }, [loadGoogle, loadZum, loadCommunity])
+    loadXTrends()
+  }, [loadGoogle, loadZum, loadCommunity, loadXTrends])
 
   function handleRefresh() {
     loadGoogle()
     loadZum()
     loadCommunity()
+    loadXTrends()
   }
 
-  const loading = googleLoading || zumLoading || communityLoading
+  const loading = googleLoading || zumLoading || communityLoading || xLoading
 
   const fetchedTime = (google?.fetchedAt ?? zum?.fetchedAt ?? community?.fetchedAt)
     ? new Date((google?.fetchedAt ?? zum?.fetchedAt ?? community?.fetchedAt)!).toLocaleTimeString('ko-KR', {
@@ -274,6 +298,39 @@ export default function TrendsPage() {
                       {t.keyword}
                     </a>
                     {directionMark(t.direction, t.delta)}
+                  </li>
+                ))}
+          </ol>
+        )}
+      </section>
+
+      {/* X 트렌드 */}
+      <section className="trends-card trends-zum-section">
+        <div className="trends-card-header">
+          <span className="trends-country-name">🐦 X(트위터) 한국 트렌드</span>
+        </div>
+        {xError ? (
+          <p className="trends-error" style={{ padding: '0.5rem 0' }}>데이터를 불러오지 못했습니다.</p>
+        ) : (
+          <ol className="zum-list">
+            {xLoading
+              ? Array.from({ length: 10 }).map((_, i) => (
+                  <li key={i} className="zum-item trends-skeleton">
+                    <span className="trends-rank">{i + 1}</span>
+                    <span className="trends-title-placeholder" style={{ height: '0.65rem', flex: 1, borderRadius: 3 }} />
+                  </li>
+                ))
+              : xTrends?.data.map((topic, i) => (
+                  <li key={i} className="zum-item">
+                    <span className="trends-rank">{i + 1}</span>
+                    <a
+                      href={`https://x.com/search?q=${encodeURIComponent(topic)}&src=trend_click`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="trends-title"
+                    >
+                      {topic}
+                    </a>
                   </li>
                 ))}
           </ol>
