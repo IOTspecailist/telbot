@@ -145,6 +145,55 @@ export default function TrendsPage() {
         {fetchedTime && <p className="page-sub">기준 {fetchedTime} KST</p>}
       </header>
 
+      {/* 구글 급상승 */}
+      <div className="trends-section-label">📈 구글 급상승 검색어</div>
+      {googleError && <p className="trends-error">데이터를 불러오지 못했습니다.</p>}
+      {!googleError && (
+        <div className="trends-grid" style={{ marginBottom: '1.25rem' }}>
+          {(google?.data ?? [{}, {}, {}]).map((country, ci) => (
+            <section key={ci} className="trends-card">
+              <div className="trends-card-header">
+                <span className="trends-flag">{(country as CountryTrends).flag ?? ''}</span>
+                <span className="trends-country-name">{(country as CountryTrends).name ?? ''}</span>
+              </div>
+              <ol className="trends-list">
+                {googleLoading
+                  ? Array.from({ length: 10 }).map((_, i) => (
+                      <li key={i} className="trends-item trends-skeleton">
+                        <span className="trends-rank">{i + 1}</span>
+                        <span className="trends-title-placeholder" />
+                      </li>
+                    ))
+                  : (country as CountryTrends).trends?.slice(0, 10).map((t, i) => (
+                      <li key={i} className="trends-item">
+                        <span className="trends-rank">{i + 1}</span>
+                        <a
+                          href={`https://www.google.com/search?q=${encodeURIComponent(t.title)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="trends-title"
+                        >
+                          {t.title}
+                        </a>
+                        {t.traffic && <span className="trends-traffic">{t.traffic}</span>}
+                      </li>
+                    ))}
+              </ol>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {/* 나무위키 링크 버튼 */}
+      <div className="namu-links">
+        <a href="https://namu.wiki/" target="_blank" rel="noopener noreferrer" className="namu-btn">
+          나무위키
+        </a>
+        <a href="https://arca.live/b/namuhotnow/" target="_blank" rel="noopener noreferrer" className="namu-btn">
+          나무위키 실검이유
+        </a>
+      </div>
+
       {/* 커뮤니티 실시간 이슈 */}
       <div className="trends-section-label">💬 커뮤니티 실시간 이슈</div>
       <div className="trends-grid community-grid">
@@ -228,44 +277,6 @@ export default function TrendsPage() {
         )}
       </section>
 
-      {/* 구글 급상승 */}
-      <div className="trends-section-label">📈 구글 급상승 검색어</div>
-      {googleError && <p className="trends-error">데이터를 불러오지 못했습니다.</p>}
-      {!googleError && (
-        <div className="trends-grid">
-          {(google?.data ?? [{}, {}, {}]).map((country, ci) => (
-            <section key={ci} className="trends-card">
-              <div className="trends-card-header">
-                <span className="trends-flag">{(country as CountryTrends).flag ?? ''}</span>
-                <span className="trends-country-name">{(country as CountryTrends).name ?? ''}</span>
-              </div>
-              <ol className="trends-list">
-                {googleLoading
-                  ? Array.from({ length: 10 }).map((_, i) => (
-                      <li key={i} className="trends-item trends-skeleton">
-                        <span className="trends-rank">{i + 1}</span>
-                        <span className="trends-title-placeholder" />
-                      </li>
-                    ))
-                  : (country as CountryTrends).trends?.slice(0, 10).map((t, i) => (
-                      <li key={i} className="trends-item">
-                        <span className="trends-rank">{i + 1}</span>
-                        <a
-                          href={`https://www.google.com/search?q=${encodeURIComponent(t.title)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="trends-title"
-                        >
-                          {t.title}
-                        </a>
-                        {t.traffic && <span className="trends-traffic">{t.traffic}</span>}
-                      </li>
-                    ))}
-              </ol>
-            </section>
-          ))}
-        </div>
-      )}
     </main>
   )
 }
