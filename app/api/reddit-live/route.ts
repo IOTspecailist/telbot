@@ -24,9 +24,12 @@ interface RedditChild {
 async function fetchSubreddit(sub: string, limit = 15): Promise<RedditPost[]> {
   const res = await fetch(`https://www.reddit.com/r/${sub}.json?limit=${limit + 5}`, {
     headers: {
-      'User-Agent': 'telbot-trends/1.0',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
     },
-    signal: AbortSignal.timeout(8000),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json()
@@ -57,6 +60,7 @@ export async function GET() {
     siteUrl: `https://www.reddit.com/r/${s.id}/`,
     posts: results[i].status === 'fulfilled' ? results[i].value : [],
     error: results[i].status === 'rejected' || (results[i].status === 'fulfilled' && results[i].value.length === 0),
+    _reason: results[i].status === 'rejected' ? String((results[i] as PromiseRejectedResult).reason) : undefined,
   }))
 
   return NextResponse.json({ data, fetchedAt: new Date().toISOString() })
