@@ -117,19 +117,18 @@ async function fetchRuliweb(): Promise<Post[]> {
 
   const posts: Post[] = []
   const seen = new Set<string>()
-  // <a class="subject_link..." href="/best/board/300143/read/NUMERIC...">...<span class="text_over">TITLE</span>...</a>
-  const blockRe = /<a\b[^>]*class="[^"]*subject_link[^"]*"[^>]*href="(\/best\/board\/300143\/read\/\d+[^"]*)"[^>]*>([\s\S]*?)<\/a>/g
+  // href="/best/board/300143/read/{id}?m=humor..." — class 속성 없음
+  const re = /<a\b[^>]*href="(\/best\/board\/300143\/read\/\d+[^"]*)"[^>]*>([\s\S]*?)<\/a>/g
   let m: RegExpExecArray | null
-  while ((m = blockRe.exec(html)) !== null && posts.length < 15) {
-    const href = m[1]
-    if (seen.has(href)) continue
-    seen.add(href)
-    // Title is inside <strong class="text_over"> or <span class="text_over">
-    const spanM = m[2].match(/<(?:strong|span)[^>]*class="[^"]*text_over[^"]*"[^>]*>\s*([^<]+?)\s*<\/(?:strong|span)>/)
-    if (!spanM) continue
-    const title = htmlEntities(spanM[1].trim())
+  while ((m = re.exec(html)) !== null && posts.length < 15) {
+    const baseHref = m[1].split('?')[0]
+    if (seen.has(baseHref)) continue
+    seen.add(baseHref)
+    // 태그 제거 후 앞 순위 숫자와 뒤 댓글수 (N) 제거
+    const text = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    const title = htmlEntities(text.replace(/^\d+\s+/, '').replace(/\s*\(\d+\)\s*$/, '').trim())
     if (!title || title.length < 2) continue
-    posts.push({ title, url: `https://bbs.ruliweb.com${href}` })
+    posts.push({ title, url: `https://bbs.ruliweb.com${baseHref}` })
   }
   return posts
 }
