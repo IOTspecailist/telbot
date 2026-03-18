@@ -14,24 +14,21 @@ interface TrendingTopic {
 }
 
 async function fetchKoreaDailyTrends(): Promise<TrendingTopic[]> {
-  const res = await fetch(
-    'https://trends.google.com/trends/api/dailytrends?hl=ko&tz=-540&geo=KR&ns=15',
-    {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TrendBot/1.0)' },
-      signal: AbortSignal.timeout(10000),
-    }
-  )
-  const raw = await res.text()
-  // Google wraps response with )]}'
-  const json = JSON.parse(raw.replace(/^\)\]\}'\n/, ''))
-  const days = json?.default?.trendingSearchesDays ?? []
-  if (days.length === 0) return []
+  const res = await fetch('https://trends.google.com/trending/rss?geo=KR', {
+    signal: AbortSignal.timeout(10000),
+  })
+  const xml = await res.text()
 
-  const searches = days[0]?.trendingSearches ?? []
-  return searches.map((s: { title: { query: string }; formattedTraffic: string }) => ({
-    title: s.title?.query ?? '',
-    traffic: s.formattedTraffic ?? '',
-  }))
+  const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map(m => m[1])
+  if (items.length === 0) return []
+
+  return items.map(item => {
+    const cdataTitle = item.match(/<title><!\[CDATA\[(.+?)\]\]><\/title>/)
+    const plainTitle = item.match(/<title>(.+?)<\/title>/)
+    const title = cdataTitle?.[1] ?? plainTitle?.[1]?.trim() ?? ''
+    const traffic = item.match(/<ht:approx_traffic>([^<]+)<\/ht:approx_traffic>/)?.[1] ?? ''
+    return { title, traffic }
+  }).filter(t => t.title)
 }
 
 function categorize(topics: TrendingTopic[]): Record<string, TrendingTopic[]> {
