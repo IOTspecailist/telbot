@@ -34,9 +34,14 @@ export default function MainPanel() {
       {captchaToken && (
         <>
           <section className="notify-section">
-            <Link href="/trends" className="notify-btn" style={{ textAlign: 'center', display: 'block' }}>
+            <span className="panel-section-label">페이지</span>
+            <Link href="/trends" className="notify-btn notify-btn-nav">
               📈 실시간 급상승 트렌드
             </Link>
+          </section>
+
+          <section className="notify-section">
+            <span className="panel-section-label">텔레그램 발송</span>
             <NotifyButton
               type="test"
               label="🧪 테스트 알림 전송"
