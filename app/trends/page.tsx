@@ -212,7 +212,10 @@ export default function TrendsPage() {
                 </span>
               </div>
               {s.error ? (
-                <p className="trends-error" style={{ padding: '0.5rem 0' }}>데이터를 불러오지 못했습니다.</p>
+                <p className="trends-error" style={{ padding: '0.5rem 0' }}>
+                  데이터를 불러오지 못했습니다.{' '}
+                  <a href={s.siteUrl} target="_blank" rel="noopener noreferrer" className="community-error-link">바로가기 →</a>
+                </p>
               ) : (
                 <ol className="trends-list community-list">
                   {communityLoading

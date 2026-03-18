@@ -25,49 +25,59 @@ function htmlEntities(str: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&#039;/g, "'")
     .replace(/&nbsp;/g, ' ')
     .trim()
 }
 
-function extractPosts(html: string, tagFilter: (attrs: string) => boolean, hrefFilter: (href: string) => boolean, limit = 15): Post[] {
-  const posts: Post[] = []
-  const seen = new Set<string>()
-  const tagRe = /<a\b([^>]{5,300})>([\s\S]{2,120}?)<\/a>/g
-  let m: RegExpExecArray | null
-  while ((m = tagRe.exec(html)) !== null && posts.length < limit) {
-    const attrs = m[1]
-    if (!tagFilter(attrs)) continue
-    const hrefM = attrs.match(/href="([^"]+)"/) ?? attrs.match(/href='([^']+)'/)
-    if (!hrefM) continue
-    const href = hrefM[1]
-    if (!hrefFilter(href) || seen.has(href)) continue
-    seen.add(href)
-    const title = htmlEntities(m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
-    if (!title || title.length < 2) continue
-    posts.push({ title, url: href })
-  }
-  return posts
-}
-
+// ── FMKorea ───────────────────────────────────────────────────────────────────
+// Uses a 2-step cookie bypass: get the security page cookie, then retry
 async function fetchFmkorea(): Promise<Post[]> {
-  const res = await fetch('https://www.fmkorea.com/best', {
+  // Step 1: get security page and extract cookie value
+  const secRes = await fetch('https://www.fmkorea.com/best', {
     headers: HEADERS,
+    signal: AbortSignal.timeout(8000),
+  })
+  const secHtml = await secRes.text()
+
+  const cookieM = secHtml.match(/escape\('([a-f0-9]{32})'\)/)
+  if (!cookieM) throw new Error('Security cookie not found')
+  const cookieVal = cookieM[1]
+
+  // Step 2: retry with cookie set by the security page JS
+  const res = await fetch('https://www.fmkorea.com/best?ddosCheckOnly=1', {
+    headers: {
+      ...HEADERS,
+      Cookie: `lite_year=${cookieVal}; g_lite_year=${cookieVal}`,
+    },
     signal: AbortSignal.timeout(8000),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const html = await res.text()
 
-  // FMKorea XE CMS: article title links have class="title" and href="/NUMERIC"
-  const posts = extractPosts(
-    html,
-    (attrs) => (attrs.includes('class="title"') || attrs.includes("class='title'")),
-    (href) => /^\/\d+/.test(href),
-  )
-  // Make URLs absolute
-  return posts.map(p => ({ ...p, url: p.url.startsWith('http') ? p.url : `https://www.fmkorea.com${p.url}` }))
+  if (html.includes('에펨코리아 보안 시스템')) throw new Error('Still blocked by WAF')
+
+  // FMKorea XE CMS: <a class="title" href="/NUMERIC">TITLE</a>
+  const posts: Post[] = []
+  const seen = new Set<string>()
+  const re = /<a\b([^>]{5,400})>([\s\S]{2,500}?)<\/a>/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) !== null && posts.length < 15) {
+    const attrs = m[1]
+    if (!attrs.includes('class="title"') && !attrs.includes("class='title'")) continue
+    const hrefM = attrs.match(/href="([^"]+)"/)
+    if (!hrefM) continue
+    const href = hrefM[1]
+    if (!/^\/\d+/.test(href) || seen.has(href)) continue
+    seen.add(href)
+    const title = htmlEntities(m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+    if (!title || title.length < 2) continue
+    posts.push({ title, url: href.startsWith('http') ? href : `https://www.fmkorea.com${href}` })
+  }
+  return posts
 }
 
+// ── TheQoo ────────────────────────────────────────────────────────────────────
 async function fetchTheqoo(): Promise<Post[]> {
   const res = await fetch('https://theqoo.net/hot', {
     headers: { ...HEADERS, Referer: 'https://theqoo.net/' },
@@ -76,40 +86,55 @@ async function fetchTheqoo(): Promise<Post[]> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const html = await res.text()
 
-  // TheQoo: article links href="/hot/NUMERIC" or "/square/NUMERIC"
-  const posts = extractPosts(
-    html,
-    () => true,
-    (href) => /^https?:\/\/theqoo\.net\/(hot|square)\/\d+|^\/(hot|square)\/\d+/.test(href),
-  )
-  return posts
-    .map(p => ({
-      title: p.title.replace(/\s*\[\d+\]\s*$/, '').trim(), // strip trailing comment count
-      url: p.url.startsWith('http') ? p.url : `https://theqoo.net${p.url}`,
-    }))
-    .filter(p => p.title.length > 1)
+  const posts: Post[] = []
+  const seen = new Set<string>()
+  // Article links: /hot/NUMERIC (exact — no hash, no "category")
+  const re = /<a\b([^>]{5,300})>([\s\S]{2,600}?)<\/a>/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) !== null) {
+    const attrs = m[1]
+    const hrefM = attrs.match(/href="([^"]+)"/)
+    if (!hrefM) continue
+    const href = hrefM[1]
+    if (!/^\/(hot|square)\/\d+$/.test(href) || seen.has(href)) continue
+    seen.add(href)
+    const title = htmlEntities(m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+    if (!title || title.length < 2) continue
+    posts.push({ title, url: `https://theqoo.net${href}` })
+  }
+  // Skip first 4 (공지글)
+  return posts.slice(4, 19)
 }
 
+// ── Ruliweb ───────────────────────────────────────────────────────────────────
 async function fetchRuliweb(): Promise<Post[]> {
-  const res = await fetch('https://bbs.ruliweb.com/best/board/300143', {
-    headers: { ...HEADERS, Referer: 'https://bbs.ruliweb.com/' },
+  const res = await fetch('https://bbs.ruliweb.com/best', {
+    headers: HEADERS,
     signal: AbortSignal.timeout(8000),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const html = await res.text()
 
-  // Ruliweb: subject_link class
-  const posts = extractPosts(
-    html,
-    (attrs) => attrs.includes('subject_link'),
-    (href) => href.includes('ruliweb.com') || href.startsWith('/'),
-  )
-  return posts.map(p => ({
-    ...p,
-    url: p.url.startsWith('http') ? p.url : `https://bbs.ruliweb.com${p.url}`,
-  }))
+  const posts: Post[] = []
+  const seen = new Set<string>()
+  // <a class="subject_link..." href="/best/board/300143/read/NUMERIC...">...<span class="text_over">TITLE</span>...</a>
+  const blockRe = /<a\b[^>]*class="[^"]*subject_link[^"]*"[^>]*href="(\/best\/board\/300143\/read\/\d+[^"]*)"[^>]*>([\s\S]*?)<\/a>/g
+  let m: RegExpExecArray | null
+  while ((m = blockRe.exec(html)) !== null && posts.length < 15) {
+    const href = m[1]
+    if (seen.has(href)) continue
+    seen.add(href)
+    // Title is inside <span class="text_over">
+    const spanM = m[2].match(/<span[^>]*class="[^"]*text_over[^"]*"[^>]*>\s*([^<]+?)\s*<\/span>/)
+    if (!spanM) continue
+    const title = htmlEntities(spanM[1].trim())
+    if (!title || title.length < 2) continue
+    posts.push({ title, url: `https://bbs.ruliweb.com${href}` })
+  }
+  return posts
 }
 
+// ── Route ─────────────────────────────────────────────────────────────────────
 export async function GET() {
   const results = await Promise.allSettled([
     fetchFmkorea(),
@@ -119,8 +144,8 @@ export async function GET() {
 
   const meta = [
     { id: 'fmkorea', name: '에펨코리아', siteUrl: 'https://www.fmkorea.com/best' },
-    { id: 'theqoo',  name: '더쿠',      siteUrl: 'https://theqoo.net/hot' },
-    { id: 'ruliweb', name: '루리웹',    siteUrl: 'https://bbs.ruliweb.com/best/board/300143' },
+    { id: 'theqoo',  name: '더쿠',       siteUrl: 'https://theqoo.net/hot' },
+    { id: 'ruliweb', name: '루리웹',     siteUrl: 'https://bbs.ruliweb.com/best/board/300143' },
   ]
 
   const data: Community[] = results.map((r, i) => ({

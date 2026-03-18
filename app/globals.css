@@ -294,6 +294,13 @@ body {
 }
 .community-site-link:hover { color: #d0d0e0; }
 
+.community-error-link {
+  color: #9090b0;
+  text-decoration: none;
+  font-size: 0.62rem;
+}
+.community-error-link:hover { color: #b0b0d0; }
+
 /* ── Zum trends ──────────────────────────── */
 .trends-zum-section {
   margin-bottom: 1.25rem;
