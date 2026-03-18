@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRef, useState } from 'react'
 import NotifyButton from './NotifyButton'
 import WeatherButton from './WeatherButton'
@@ -33,6 +34,9 @@ export default function MainPanel() {
       {captchaToken && (
         <>
           <section className="notify-section">
+            <Link href="/trends" className="notify-btn" style={{ textAlign: 'center', display: 'block' }}>
+              📈 실시간 급상승 트렌드
+            </Link>
             <NotifyButton
               type="test"
               label="🧪 테스트 알림 전송"
