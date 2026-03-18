@@ -34,3 +34,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to send topic trends' }, { status: 500 })
   }
 }
+

@@ -54,6 +54,27 @@ interface XApiResponse {
   fetchedAt: string
 }
 
+interface RedditPost {
+  title: string
+  url: string
+  score: number
+  subreddit: string
+  numComments: number
+}
+
+interface RedditSection {
+  id: string
+  name: string
+  siteUrl: string
+  posts: RedditPost[]
+  error?: boolean
+}
+
+interface RedditApiResponse {
+  data: RedditSection[]
+  fetchedAt: string
+}
+
 function directionMark(direction: string, delta: number) {
   if (direction === 'up') return <span className="zum-up">▲ {Math.abs(delta)}</span>
   if (direction === 'down') return <span className="zum-down">▼ {Math.abs(delta)}</span>
@@ -71,10 +92,12 @@ export default function TrendsPage() {
   const [zum, setZum] = useState<ZumApiResponse | null>(null)
   const [community, setCommunity] = useState<CommunityApiResponse | null>(null)
   const [xTrends, setXTrends] = useState<XApiResponse | null>(null)
+  const [reddit, setReddit] = useState<RedditApiResponse | null>(null)
   const [googleLoading, setGoogleLoading] = useState(true)
   const [zumLoading, setZumLoading] = useState(true)
   const [communityLoading, setCommunityLoading] = useState(true)
   const [xLoading, setXLoading] = useState(true)
+  const [redditLoading, setRedditLoading] = useState(true)
   const [googleError, setGoogleError] = useState(false)
   const [zumError, setZumError] = useState(false)
   const [xError, setXError] = useState(false)
@@ -134,21 +157,36 @@ export default function TrendsPage() {
     }
   }, [])
 
+  const loadReddit = useCallback(async () => {
+    setRedditLoading(true)
+    try {
+      const res = await fetch('/api/reddit-live')
+      if (!res.ok) throw new Error()
+      setReddit(await res.json())
+    } catch {
+      setReddit(null)
+    } finally {
+      setRedditLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     loadGoogle()
     loadZum()
     loadCommunity()
     loadXTrends()
-  }, [loadGoogle, loadZum, loadCommunity, loadXTrends])
+    loadReddit()
+  }, [loadGoogle, loadZum, loadCommunity, loadXTrends, loadReddit])
 
   function handleRefresh() {
     loadGoogle()
     loadZum()
     loadCommunity()
     loadXTrends()
+    loadReddit()
   }
 
-  const loading = googleLoading || zumLoading || communityLoading || xLoading
+  const loading = googleLoading || zumLoading || communityLoading || xLoading || redditLoading
 
   const fetchedTime = (google?.fetchedAt ?? zum?.fetchedAt ?? community?.fetchedAt)
     ? new Date((google?.fetchedAt ?? zum?.fetchedAt ?? community?.fetchedAt)!).toLocaleTimeString('ko-KR', {
@@ -336,6 +374,57 @@ export default function TrendsPage() {
           </ol>
         )}
       </section>
+
+      {/* Reddit 인기글 */}
+      <div className="trends-section-label">🤖 Reddit 인기글</div>
+      <div className="trends-grid community-grid">
+        {(reddit?.data ?? [{}, {}, {}]).map((section, ci) => {
+          const s = section as RedditSection
+          return (
+            <section key={ci} className="trends-card">
+              <div className="trends-card-header">
+                <span className="trends-flag">🔴</span>
+                <span className="trends-country-name">
+                  {s.name
+                    ? <a href={s.siteUrl} target="_blank" rel="noopener noreferrer" className="community-site-link">{s.name}</a>
+                    : ''}
+                </span>
+              </div>
+              {s.error ? (
+                <p className="trends-error" style={{ padding: '0.5rem 0' }}>
+                  데이터를 불러오지 못했습니다.{' '}
+                  <a href={s.siteUrl} target="_blank" rel="noopener noreferrer" className="community-error-link">바로가기 →</a>
+                </p>
+              ) : (
+                <ol className="trends-list community-list">
+                  {redditLoading
+                    ? Array.from({ length: 10 }).map((_, i) => (
+                        <li key={i} className="trends-item trends-skeleton">
+                          <span className="trends-rank">{i + 1}</span>
+                          <span className="trends-title-placeholder" />
+                        </li>
+                      ))
+                    : s.posts?.slice(0, 15).map((post, i) => (
+                        <li key={i} className="trends-item">
+                          <span className="trends-rank">{i + 1}</span>
+                          <a
+                            href={post.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="trends-title community-post-title"
+                            title={post.title}
+                          >
+                            {post.title}
+                          </a>
+                          <span className="trends-traffic">▲{post.score.toLocaleString()}</span>
+                        </li>
+                      ))}
+                </ol>
+              )}
+            </section>
+          )
+        })}
+      </div>
 
     </main>
   )
