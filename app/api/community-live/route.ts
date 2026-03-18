@@ -124,8 +124,8 @@ async function fetchRuliweb(): Promise<Post[]> {
     const href = m[1]
     if (seen.has(href)) continue
     seen.add(href)
-    // Title is inside <span class="text_over">
-    const spanM = m[2].match(/<span[^>]*class="[^"]*text_over[^"]*"[^>]*>\s*([^<]+?)\s*<\/span>/)
+    // Title is inside <strong class="text_over"> or <span class="text_over">
+    const spanM = m[2].match(/<(?:strong|span)[^>]*class="[^"]*text_over[^"]*"[^>]*>\s*([^<]+?)\s*<\/(?:strong|span)>/)
     if (!spanM) continue
     const title = htmlEntities(spanM[1].trim())
     if (!title || title.length < 2) continue
