@@ -238,6 +238,38 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* ── Zum trends ──────────────────────────── */
+.trends-zum-section {
+  margin-bottom: 1.25rem;
+}
+
+.trends-section-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.6rem;
+}
+
+.zum-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.25rem 1rem;
+}
+
+.zum-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  line-height: 1.4;
+}
+
+.zum-up { font-size: 0.55rem; color: #e07070; flex-shrink: 0; }
+.zum-down { font-size: 0.55rem; color: #7090e0; flex-shrink: 0; }
+.zum-eq { font-size: 0.55rem; color: var(--text-dim); flex-shrink: 0; }
+
 /* ── Trends page ─────────────────────────── */
 .trends-container {
   max-width: 860px;

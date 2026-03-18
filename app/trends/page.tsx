@@ -15,34 +15,80 @@ interface CountryTrends {
   trends: Trend[]
 }
 
-interface ApiResponse {
+interface GoogleApiResponse {
   data: CountryTrends[]
   fetchedAt: string
 }
 
-export default function TrendsPage() {
-  const [result, setResult] = useState<ApiResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+interface ZumTrendItem {
+  keyword: string
+  delta: number
+  direction: string
+}
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError(false)
+interface ZumApiResponse {
+  data: ZumTrendItem[]
+  fetchedAt: string
+}
+
+function directionMark(direction: string, delta: number) {
+  if (direction === 'up') return <span className="zum-up">▲ {Math.abs(delta)}</span>
+  if (direction === 'down') return <span className="zum-down">▼ {Math.abs(delta)}</span>
+  return <span className="zum-eq">—</span>
+}
+
+export default function TrendsPage() {
+  const [google, setGoogle] = useState<GoogleApiResponse | null>(null)
+  const [zum, setZum] = useState<ZumApiResponse | null>(null)
+  const [googleLoading, setGoogleLoading] = useState(true)
+  const [zumLoading, setZumLoading] = useState(true)
+  const [googleError, setGoogleError] = useState(false)
+  const [zumError, setZumError] = useState(false)
+
+  const loadGoogle = useCallback(async () => {
+    setGoogleLoading(true)
+    setGoogleError(false)
     try {
       const res = await fetch('/api/trends-live')
       if (!res.ok) throw new Error()
-      setResult(await res.json())
+      setGoogle(await res.json())
     } catch {
-      setError(true)
+      setGoogleError(true)
     } finally {
-      setLoading(false)
+      setGoogleLoading(false)
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  const loadZum = useCallback(async () => {
+    setZumLoading(true)
+    setZumError(false)
+    try {
+      const res = await fetch('/api/zum-trends')
+      if (!res.ok) throw new Error()
+      setZum(await res.json())
+    } catch {
+      setZumError(true)
+    } finally {
+      setZumLoading(false)
+    }
+  }, [])
 
-  const fetchedTime = result?.fetchedAt
-    ? new Date(result.fetchedAt).toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  useEffect(() => {
+    loadGoogle()
+    loadZum()
+  }, [loadGoogle, loadZum])
+
+  function handleRefresh() {
+    loadGoogle()
+    loadZum()
+  }
+
+  const loading = googleLoading || zumLoading
+
+  const fetchedTime = (google?.fetchedAt ?? zum?.fetchedAt)
+    ? new Date((google?.fetchedAt ?? zum?.fetchedAt)!).toLocaleTimeString('ko-KR', {
+        timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', second: '2-digit',
+      })
     : null
 
   return (
@@ -50,26 +96,61 @@ export default function TrendsPage() {
       <header className="trends-header">
         <div className="trends-header-top">
           <Link href="/" className="trends-back">← 돌아가기</Link>
-          <button onClick={load} disabled={loading} className="trends-refresh">
+          <button onClick={handleRefresh} disabled={loading} className="trends-refresh">
             {loading ? '로딩 중…' : '새로고침'}
           </button>
         </div>
-        <h1 className="page-title">구글 실시간 트렌드</h1>
+        <h1 className="page-title">실시간 트렌드</h1>
         {fetchedTime && <p className="page-sub">기준 {fetchedTime} KST</p>}
       </header>
 
-      {error && <p className="trends-error">데이터를 불러오지 못했습니다.</p>}
+      {/* 줌 실시간 검색어 */}
+      <section className="trends-card trends-zum-section">
+        <div className="trends-card-header">
+          <span className="trends-country-name">🔥 줌(zum) 실시간 검색어</span>
+        </div>
+        {zumError ? (
+          <p className="trends-error" style={{ padding: '0.5rem 0' }}>데이터를 불러오지 못했습니다.</p>
+        ) : (
+          <ol className="zum-list">
+            {zumLoading
+              ? Array.from({ length: 10 }).map((_, i) => (
+                  <li key={i} className="zum-item trends-skeleton">
+                    <span className="trends-rank">{i + 1}</span>
+                    <span className="trends-title-placeholder" style={{ height: '0.65rem', flex: 1, borderRadius: 3 }} />
+                  </li>
+                ))
+              : zum?.data.map((t, i) => (
+                  <li key={i} className="zum-item">
+                    <span className="trends-rank">{i + 1}</span>
+                    <a
+                      href={`https://search.zum.com/search.zum?method=uni&option=acjson&query=${encodeURIComponent(t.keyword)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="trends-title"
+                    >
+                      {t.keyword}
+                    </a>
+                    {directionMark(t.direction, t.delta)}
+                  </li>
+                ))}
+          </ol>
+        )}
+      </section>
 
-      {!error && (
+      {/* 구글 급상승 */}
+      <div className="trends-section-label">📈 구글 급상승 검색어</div>
+      {googleError && <p className="trends-error">데이터를 불러오지 못했습니다.</p>}
+      {!googleError && (
         <div className="trends-grid">
-          {(result?.data ?? [{}, {}, {}]).map((country, ci) => (
+          {(google?.data ?? [{}, {}, {}]).map((country, ci) => (
             <section key={ci} className="trends-card">
               <div className="trends-card-header">
                 <span className="trends-flag">{(country as CountryTrends).flag ?? ''}</span>
                 <span className="trends-country-name">{(country as CountryTrends).name ?? ''}</span>
               </div>
               <ol className="trends-list">
-                {loading
+                {googleLoading
                   ? Array.from({ length: 10 }).map((_, i) => (
                       <li key={i} className="trends-item trends-skeleton">
                         <span className="trends-rank">{i + 1}</span>
