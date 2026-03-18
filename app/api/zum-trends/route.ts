@@ -8,10 +8,13 @@ interface ZumTrend {
 
 export async function GET() {
   try {
-    const res = await fetch('https://www.zum.com/', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      signal: AbortSignal.timeout(8000),
-    })
+    const res = await fetch(
+      'https://search.zum.com/search.zum?method=uni&option=acjson&qm=f_typing.top&rd=0&query=',
+      {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(8000),
+      }
+    )
     const html = await res.text()
 
     const match = html.match(/"issueTrends":(\[[\s\S]*?\])\s*[,}]/)
