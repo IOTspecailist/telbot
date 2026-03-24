@@ -39,7 +39,7 @@ export default function MainPanel() {
               실시간 급상승 트렌드
             </Link>
             <a href="/mma-stat.html" className="notify-btn notify-btn-nav">
-              MMA 전적 통계
+              MMA STAT 생성기
             </a>
           </section>
 
