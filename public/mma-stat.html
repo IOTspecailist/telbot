@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fighter Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#111;
+  color:#fff;
+  font-family:'Barlow Condensed',sans-serif;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
+.panel {
+  width:100%;
+  max-width:420px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  border-left:3px solid #d4001a;
+  border-radius:4px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.panel h2 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;
+  color:#d4001a;
+  letter-spacing:3px;
+}
+input[type=text] {
+  width:100%;
+  background:rgba(0,0,0,0.6);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:3px;
+  color:#fff;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;
+  letter-spacing:2px;
+  padding:8px 12px;
+  outline:none;
+}
+.grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.stat-item { display:flex; flex-direction:column; gap:3px; }
+.stat-top { display:flex; justify-content:space-between; align-items:center; }
+.stat-top span:first-child { font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+.stat-top .num { font-family:'Bebas Neue',sans-serif; font-size:18px; color:#d4001a; }
+input[type=range] { width:100%; accent-color:#d4001a; }
+.extra-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
+.btn {
+  width:100%;
+  max-width:420px;
+  padding:14px;
+  background:#d4001a;
+  border:none;
+  border-radius:4px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;
+  letter-spacing:3px;
+  color:#fff;
+  cursor:pointer;
+}
+.hint {
+  display:none;
+  width:100%;
+  max-width:420px;
+  padding:10px;
+  text-align:center;
+  font-size:13px;
+  color:#d4001a;
+  background:rgba(212,0,26,0.07);
+  border:1px solid rgba(212,0,26,0.3);
+  border-radius:4px;
+  font-weight:700;
+  letter-spacing:1px;
+}
+#outImg {
+  display:none;
+  width:100%;
+  max-width:420px;
+  border-radius:4px;
+}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h2>FIGHTER NAME / YEAR</h2>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <input type="text" id="nameInput" value="JON JONES" placeholder="FIGHTER NAME" style="flex:1;">
+    <input type="text" id="yearInput" value="2025" placeholder="YEAR" style="width:90px;color:#ffd700;text-align:center;">
+  </div>
+</div>
+
+<div class="panel">
+  <h2>STATS — RADAR (1-10)</h2>
+  <div class="grid" id="statGrid"></div>
+</div>
+
+<div class="panel">
+  <h2>EXTRA STATS — TABLE ONLY (1-10)</h2>
+  <div class="extra-grid" id="extraGrid"></div>
+</div>
+
+<canvas id="canvas" width="480" height="650"></canvas>
+
+<button class="btn" id="saveBtn">IMAGE SAVE</button>
+
+<div class="hint" id="hint">아래 이미지를 길게 눌러서 저장하세요</div>
+<img id="outImg" alt="Fighter Profile">
+
+<script>
+var STATS = [
+  {key:'fightiq',   label:'Fight IQ',  val:7},
+  {key:'striking',  label:'Striking',  val:8},
+  {key:'wrestling', label:'Wrestling', val:7},
+  {key:'jiujitsu',  label:'Jiu-Jitsu', val:8},
+  {key:'chin',      label:'Chin',      val:6},
+  {key:'cardio',    label:'Cardio',    val:9},
+  {key:'speed',     label:'Speed',     val:8},
+  {key:'power',     label:'Power',     val:7}
+];
+
+var EXTRA = [
+  {key:'micwork',   label:'Mic Work',  val:7},
+  {key:'aura',      label:'Aura',      val:8}
+];
+
+var ANGLES = [-112.5,-67.5,-22.5,22.5,67.5,112.5,157.5,-157.5];
+
+function toRad(deg) { return deg * Math.PI / 180; }
+
+function getTotal() {
+  var sum = 0;
+  STATS.forEach(function(s) { sum += s.val; });
+  EXTRA.forEach(function(s) { sum += s.val; });
+  return sum;
+}
+
+// Build radar sliders
+var grid = document.getElementById('statGrid');
+STATS.forEach(function(s) {
+  var d = document.createElement('div');
+  d.className = 'stat-item';
+  d.innerHTML =
+    '<div class="stat-top">' +
+      '<span>' + s.label + '</span>' +
+      '<span class="num" id="n_' + s.key + '">' + s.val + '</span>' +
+    '</div>' +
+    '<input type="range" min="1" max="10" value="' + s.val + '">';
+  grid.appendChild(d);
+  d.querySelector('input').addEventListener('input', function(e) {
+    s.val = parseInt(e.target.value);
+    document.getElementById('n_' + s.key).textContent = s.val;
+    draw();
+  });
+});
+
+// Build extra sliders
+var extraGrid = document.getElementById('extraGrid');
+EXTRA.forEach(function(s) {
+  var d = document.createElement('div');
+  d.className = 'stat-item';
+  d.innerHTML =
+    '<div class="stat-top">' +
+      '<span>' + s.label + '</span>' +
+      '<span class="num" id="n_' + s.key + '">' + s.val + '</span>' +
+    '</div>' +
+    '<input type="range" min="1" max="10" value="' + s.val + '">';
+  extraGrid.appendChild(d);
+  d.querySelector('input').addEventListener('input', function(e) {
+    s.val = parseInt(e.target.value);
+    document.getElementById('n_' + s.key).textContent = s.val;
+    draw();
+  });
+});
+
+document.getElementById('nameInput').addEventListener('input', draw);
+document.getElementById('yearInput').addEventListener('input', draw);
+
+document.getElementById('saveBtn').addEventListener('click', function() {
+  try {
+    var canvas = document.getElementById('canvas');
+    var dataURL = canvas.toDataURL('image/png');
+    var img = document.getElementById('outImg');
+    var hint = document.getElementById('hint');
+    img.src = dataURL;
+    img.style.display = 'block';
+    hint.style.display = 'block';
+    setTimeout(function() { img.scrollIntoView({behavior:'smooth'}); }, 200);
+  } catch(e) { alert('오류: ' + e.message); }
+});
+
+function drawOct(ctx, cx, cy, r, fill, stroke, lw) {
+  ctx.beginPath();
+  for (var i = 0; i < 8; i++) {
+    var a = (Math.PI/4)*i - Math.PI/8;
+    if (i===0) ctx.moveTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+    else ctx.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+  }
+  ctx.closePath();
+  if (fill) { ctx.fillStyle=fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.stroke(); }
+}
+
+function draw() {
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+
+  ctx.clearRect(0,0,W,H);
+
+  // ── 배경 ──
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0,0,W,H);
+  var bgGrad = ctx.createLinearGradient(0,0,W,H);
+  bgGrad.addColorStop(0, 'rgba(180,0,20,0.15)');
+  bgGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
+  bgGrad.addColorStop(1, 'rgba(180,0,20,0.08)');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,W,H);
+
+  // ════════════════════════════════
+  // 구역 1 : 이름 + 총점  [0 ~ 105]
+  // ════════════════════════════════
+  var topBar = ctx.createLinearGradient(0,0,W,0);
+  topBar.addColorStop(0, '#d4001a');
+  topBar.addColorStop(0.5, '#ff1a30');
+  topBar.addColorStop(1, '#d4001a');
+  ctx.fillStyle = topBar;
+  ctx.fillRect(0, 0, W, 5);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, 5, W, 100);
+
+  var name = document.getElementById('nameInput').value || 'FIGHTER';
+  var year = document.getElementById('yearInput').value || '';
+
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+
+  // 이름 — 항상 가운데
+  ctx.font = 'bold 42px "Bebas Neue", sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = 'rgba(212,0,26,0.35)';
+  ctx.shadowBlur = 8;
+  ctx.fillText(name.toUpperCase(), W/2, 38);
+  ctx.shadowBlur = 0;
+
+  // 연도 — 같은 row 맨 우측
+  if (year) {
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 18px "Bebas Neue", sans-serif';
+    ctx.fillStyle = '#ffd700';
+    ctx.shadowColor = 'rgba(255,215,0,0.6)';
+    ctx.shadowBlur = 8;
+    ctx.fillText(year, W - 20, 38);
+    ctx.shadowBlur = 0;
+  }
+
+  // 총점 — 가운데
+  ctx.textAlign = 'center';
+  var total = getTotal();
+  ctx.font = 'bold 18px "Bebas Neue", sans-serif';
+  ctx.fillStyle = total >= 90 ? '#ffd700' : total >= 70 ? '#ff4455' : '#aaaaaa';
+  ctx.shadowColor = total >= 90 ? 'rgba(255,215,0,0.5)' : 'rgba(212,0,26,0.4)';
+  ctx.shadowBlur = 6;
+  ctx.fillText('OVERALL  ' + total + ' / 100', W/2, 80);
+  ctx.shadowBlur = 0;
+
+  // ════════════════════════════════
+  // 구역 2 : 레이더 차트  [105 ~ 490]
+  // ════════════════════════════════
+  // 차트 중심을 충분히 내리고 maxR 줄여서 라벨이 위아래 구역과 안 겹치게
+  var cx = W/2, cy = 308, maxR = 118;
+  var labelR = maxR + 44; // 라벨 위치
+
+  // 배경 옥타곤 워터마크
+  ctx.save();
+  ctx.globalAlpha = 0.03;
+  drawOct(ctx, cx, cy, 200, '#ffffff', null, 0);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // 가이드 링
+  for (var ring = 1; ring <= 5; ring++) {
+    drawOct(ctx, cx, cy, maxR/5*ring, 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0.07)', 0.5);
+  }
+
+  // 외곽 테두리
+  ctx.save();
+  ctx.shadowColor = 'rgba(212,0,26,0.5)';
+  ctx.shadowBlur = 14;
+  drawOct(ctx, cx, cy, maxR+14, null, '#d4001a', 2);
+  ctx.restore();
+  drawOct(ctx, cx, cy, maxR+26, null, 'rgba(212,0,26,0.15)', 1);
+
+  // 축 라인
+  ANGLES.forEach(function(deg) {
+    var rad = toRad(deg);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(rad)*maxR, cy + Math.sin(rad)*maxR);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // 데이터 폴리곤
+  var pts = STATS.map(function(s, i) {
+    var rad = toRad(ANGLES[i]);
+    return {x: cx + Math.cos(rad)*(s.val/10)*maxR, y: cy + Math.sin(rad)*(s.val/10)*maxR};
+  });
+
+  var grad = ctx.createRadialGradient(cx, cy-20, 0, cx, cy, maxR);
+  grad.addColorStop(0,   'rgba(255,80,80,0.85)');
+  grad.addColorStop(0.5, 'rgba(200,0,20,0.7)');
+  grad.addColorStop(1,   'rgba(100,0,10,0.5)');
+
+  ctx.beginPath();
+  pts.forEach(function(p,i){ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.save();
+  ctx.shadowColor = '#ff1a30';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  pts.forEach(function(p,i){ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+  ctx.closePath();
+  ctx.strokeStyle = '#ff3344';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.shadowColor = '#ff1a30';
+  ctx.shadowBlur = 10;
+  pts.forEach(function(p) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  });
+  ctx.restore();
+
+  ctx.shadowBlur = 0;
+  ctx.textBaseline = 'middle';
+  STATS.forEach(function(s, i) {
+    var rad = toRad(ANGLES[i]);
+    ctx.font = '700 12px "Barlow Condensed", sans-serif';
+    ctx.fillStyle = '#cccccc';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.label.toUpperCase(), cx + Math.cos(rad)*labelR, cy + Math.sin(rad)*labelR);
+  });
+
+  // ════════════════════════════════
+  // 구역 3 : 2열 압축 테이블
+  // ════════════════════════════════
+  var allStats = STATS.concat(EXTRA);
+  var tY = 482;
+  var colW = (W - 60) / 2;  // 2열
+  var rowH = 22;
+  var hdrH = 28;
+  var rows = Math.ceil(allStats.length / 2);
+  var tH = hdrH + rows * rowH;
+
+  // 테이블 전체 배경
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(20, tY, W-40, tH);
+  ctx.strokeStyle = 'rgba(212,0,26,0.4)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(20, tY, W-40, tH);
+
+  // 헤더
+  var hGrad = ctx.createLinearGradient(20,0,W-20,0);
+  hGrad.addColorStop(0, '#d4001a'); hGrad.addColorStop(1, '#8a0010');
+  ctx.fillStyle = hGrad;
+  ctx.fillRect(20, tY, W-40, hdrH);
+
+  ctx.font = 'bold 12px "Bebas Neue", sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // 왼쪽 열 헤더
+  ctx.fillText('STAT', 20 + colW*0.38, tY + hdrH/2);
+  ctx.fillText('SCORE', 20 + colW*0.78, tY + hdrH/2);
+  // 오른쪽 열 헤더
+  ctx.fillText('STAT', 20 + colW + colW*0.38, tY + hdrH/2);
+  ctx.fillText('SCORE', 20 + colW + colW*0.78, tY + hdrH/2);
+
+  // 가운데 세로 구분선
+  ctx.strokeStyle = 'rgba(212,0,26,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(20 + colW, tY);
+  ctx.lineTo(20 + colW, tY + tH);
+  ctx.stroke();
+
+  // 각 열 안의 스코어 세로선
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 0.5;
+  [20 + colW*0.6, 20 + colW + colW*0.6].forEach(function(lx) {
+    ctx.beginPath(); ctx.moveTo(lx, tY); ctx.lineTo(lx, tY+tH); ctx.stroke();
+  });
+
+  // 데이터
+  allStats.forEach(function(s, i) {
+    var col = i % 2;
+    var row = Math.floor(i / 2);
+    var rx = 20 + col * colW;
+    var ry = tY + hdrH + row * rowH;
+    var isExtra = i >= STATS.length;
+
+    ctx.fillStyle = isExtra ? 'rgba(212,0,26,0.08)' : (row%2===0 ? 'rgba(255,255,255,0.03)' : 'transparent');
+    ctx.fillRect(rx + (col===0?1:0), ry, colW - (col===1?1:0), rowH);
+
+    ctx.font = '700 12px "Barlow Condensed", sans-serif';
+    ctx.fillStyle = isExtra ? '#ffaaaa' : '#bbbbbb';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s.label.toUpperCase(), rx + colW*0.38, ry + rowH/2);
+
+    ctx.font = 'bold 13px "Bebas Neue", sans-serif';
+    ctx.fillStyle = s.val >= 9 ? '#ffd700' : s.val >= 7 ? '#ffffff' : '#888888';
+    ctx.fillText(s.val, rx + colW*0.78, ry + rowH/2);
+  });
+
+  // 하단 바
+  ctx.fillStyle = '#d4001a';
+  ctx.fillRect(0, H-5, W, 5);
+
+  // 워터마크
+  ctx.font = '700 10px "Barlow Condensed", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('STATS v1.0', W-16, H-10);
+}
+
+window.onload = function() {
+  draw();
+  setTimeout(draw, 1000);
+};
+</script>
+
+</body>
+</html>

@@ -38,6 +38,9 @@ export default function MainPanel() {
             <Link href="/trends" className="notify-btn notify-btn-nav">
               실시간 급상승 트렌드
             </Link>
+            <a href="/mma-stat.html" className="notify-btn notify-btn-nav">
+              MMA 전적 통계
+            </a>
           </section>
 
           <section className="notify-section">
