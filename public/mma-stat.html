@@ -144,6 +144,8 @@ var EXTRA = [
 ];
 
 var ANGLES = [-112.5,-67.5,-22.5,22.5,67.5,112.5,157.5,-157.5];
+var _animId = null;
+var _animT = 0;
 
 function toRad(deg) { return deg * Math.PI / 180; }
 
@@ -169,7 +171,7 @@ STATS.forEach(function(s) {
   d.querySelector('input').addEventListener('input', function(e) {
     s.val = parseInt(e.target.value);
     document.getElementById('n_' + s.key).textContent = s.val;
-    draw();
+    redraw();
   });
 });
 
@@ -188,12 +190,12 @@ EXTRA.forEach(function(s) {
   d.querySelector('input').addEventListener('input', function(e) {
     s.val = parseInt(e.target.value);
     document.getElementById('n_' + s.key).textContent = s.val;
-    draw();
+    redraw();
   });
 });
 
-document.getElementById('nameInput').addEventListener('input', draw);
-document.getElementById('yearInput').addEventListener('input', draw);
+document.getElementById('nameInput').addEventListener('input', redraw);
+document.getElementById('yearInput').addEventListener('input', redraw);
 
 document.getElementById('saveBtn').addEventListener('click', function() {
   try {
@@ -277,13 +279,63 @@ function draw() {
 
   // 총점 — 가운데
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   var total = getTotal();
-  ctx.font = 'bold 18px "Bebas Neue", sans-serif';
-  ctx.fillStyle = total >= 90 ? '#ffd700' : total >= 70 ? '#ff4455' : '#aaaaaa';
-  ctx.shadowColor = total >= 90 ? 'rgba(255,215,0,0.5)' : 'rgba(212,0,26,0.4)';
-  ctx.shadowBlur = 6;
-  ctx.fillText('OVERALL  ' + total + ' / 100', W/2, 80);
-  ctx.shadowBlur = 0;
+  ctx.font = 'bold 26px "Bebas Neue", sans-serif';
+
+  if (total >= 90) {
+    var pulse = (Math.sin(_animT * 0.004) + 1) * 0.5;
+    var tg = ctx.createLinearGradient(W/2 - 90, 70, W/2 + 90, 90);
+    var shift = (Math.sin(_animT * 0.003) + 1) * 0.5;
+    tg.addColorStop(0,              '#a8edff');
+    tg.addColorStop(Math.max(0, shift - 0.1), '#a8edff');
+    tg.addColorStop(shift,          '#ffffff');
+    tg.addColorStop(Math.min(1, shift + 0.1), '#c8f4ff');
+    tg.addColorStop(1,              '#a8edff');
+    ctx.fillStyle = tg;
+    ctx.shadowColor = 'rgba(160,235,255,' + (0.7 + pulse * 0.3) + ')';
+    ctx.shadowBlur = 12 + pulse * 16;
+    ctx.fillText('RATING  ' + total, W/2, 80);
+    ctx.shadowBlur = 0;
+    // 반짝이 파티클
+    ctx.save();
+    var sparks = [{ox:-95,oy:0},{ox:95,oy:0},{ox:-60,oy:-14},{ox:60,oy:-14},{ox:0,oy:-16},{ox:-78,oy:12},{ox:78,oy:12}];
+    sparks.forEach(function(sp, idx) {
+      var alpha = (Math.sin(_animT * 0.005 + idx * 1.1) + 1) * 0.5;
+      var sz = 1.5 + alpha * 2;
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#a8edff';
+      ctx.shadowBlur = 6;
+      // 십자 별 모양
+      var sx = W/2 + sp.ox, sy = 80 + sp.oy;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - sz*2); ctx.lineTo(sx, sy + sz*2);
+      ctx.moveTo(sx - sz*2, sy); ctx.lineTo(sx + sz*2, sy);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = sz * 0.7;
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  } else if (total >= 80) {
+    ctx.fillStyle = '#ff3344';
+    ctx.shadowColor = 'rgba(255,51,68,0.65)';
+    ctx.shadowBlur = 10;
+    ctx.fillText('RATING  ' + total, W/2, 80);
+    ctx.shadowBlur = 0;
+  } else if (total >= 70) {
+    ctx.fillStyle = '#ffd700';
+    ctx.shadowColor = 'rgba(255,215,0,0.55)';
+    ctx.shadowBlur = 8;
+    ctx.fillText('RATING  ' + total, W/2, 80);
+    ctx.shadowBlur = 0;
+  } else {
+    ctx.fillStyle = '#888888';
+    ctx.shadowBlur = 0;
+    ctx.fillText('RATING  ' + total, W/2, 80);
+  }
 
   // ════════════════════════════════
   // 구역 2 : 레이더 차트  [105 ~ 490]
@@ -456,9 +508,24 @@ function draw() {
   ctx.fillText('STATS v1.0', W-16, H-10);
 }
 
+function redraw() {
+  if (getTotal() >= 90) {
+    if (!_animId) {
+      (function loop(t) {
+        _animT = t;
+        draw();
+        if (getTotal() >= 90) _animId = requestAnimationFrame(loop);
+        else { _animId = null; draw(); }
+      })(_animT);
+    }
+  } else {
+    if (_animId) { cancelAnimationFrame(_animId); _animId = null; }
+    draw();
+  }
+}
+
 window.onload = function() {
-  draw();
-  setTimeout(draw, 1000);
+  redraw();
 };
 </script>
 
