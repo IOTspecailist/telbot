@@ -97,6 +97,94 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
   max-width:420px;
   border-radius:4px;
 }
+.btn-secondary {
+  width:100%;
+  max-width:420px;
+  padding:11px;
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:4px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:14px;
+  letter-spacing:3px;
+  color:#666;
+  cursor:pointer;
+}
+.saved-section {
+  width:100%;
+  max-width:420px;
+}
+.saved-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.saved-header span {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;
+  color:#d4001a;
+  letter-spacing:3px;
+}
+.saved-header a {
+  font-size:12px;
+  color:#ffd700;
+  text-decoration:none;
+  letter-spacing:1px;
+  font-weight:700;
+}
+.saved-header a:hover { color:#fff; }
+.card-list { display:flex; flex-wrap:wrap; gap:10px; }
+.card-item {
+  position:relative;
+  cursor:grab;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+}
+.card-item img {
+  display:block;
+  width:88px;
+  height:120px;
+  border-radius:3px;
+  border:2px solid rgba(255,255,255,0.08);
+}
+.card-item:hover img { border-color:#d4001a; }
+.card-item .card-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:10px;
+  color:#bbb;
+  text-align:center;
+  letter-spacing:1px;
+  max-width:88px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.card-del {
+  position:absolute;
+  top:3px; right:3px;
+  background:rgba(0,0,0,0.75);
+  border:none; color:#aaa;
+  font-size:10px;
+  width:16px; height:16px;
+  border-radius:2px;
+  cursor:pointer;
+  display:none;
+  line-height:16px;
+  text-align:center;
+  padding:0;
+}
+.card-item:hover .card-del { display:block; }
+.card-del:hover { color:#fff; }
+.no-cards {
+  font-size:12px;
+  color:#444;
+  font-weight:700;
+  letter-spacing:1px;
+  padding:8px 0;
+}
 </style>
 </head>
 <body>
@@ -121,10 +209,21 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
 
 <canvas id="canvas" width="480" height="650"></canvas>
 
-<button class="btn" id="saveBtn">IMAGE SAVE</button>
+<button class="btn" id="createBtn">카드 생성</button>
+<button class="btn-secondary" id="saveBtn">IMAGE SAVE</button>
 
 <div class="hint" id="hint">아래 이미지를 길게 눌러서 저장하세요</div>
 <img id="outImg" alt="Fighter Profile">
+
+<div class="saved-section" id="savedSection">
+  <div class="saved-header">
+    <span>저장된 카드</span>
+    <a href="/mma-predict.html">승자 예측 →</a>
+  </div>
+  <div id="cardList" class="card-list">
+    <span class="no-cards">아직 저장된 카드가 없습니다</span>
+  </div>
+</div>
 
 <script>
 var STATS = [
@@ -196,6 +295,71 @@ EXTRA.forEach(function(s) {
 
 document.getElementById('nameInput').addEventListener('input', redraw);
 document.getElementById('yearInput').addEventListener('input', redraw);
+
+document.getElementById('createBtn').addEventListener('click', function() {
+  var canvas = document.getElementById('canvas');
+  // 썸네일 생성 (용량 절약)
+  var thumb = document.createElement('canvas');
+  thumb.width = 88;
+  thumb.height = Math.round(88 * canvas.height / canvas.width);
+  thumb.getContext('2d').drawImage(canvas, 0, 0, thumb.width, thumb.height);
+
+  var card = {
+    id: Date.now().toString(),
+    name: document.getElementById('nameInput').value || 'FIGHTER',
+    year: document.getElementById('yearInput').value || '',
+    stats: {},
+    extra: {},
+    image: thumb.toDataURL('image/jpeg', 0.82)
+  };
+  STATS.forEach(function(s) { card.stats[s.key] = s.val; });
+  EXTRA.forEach(function(s) { card.extra[s.key] = s.val; });
+
+  var cards = JSON.parse(localStorage.getItem('mma_cards') || '[]');
+  // 같은 이름+연도면 덮어쓰기
+  cards = cards.filter(function(c) { return !(c.name === card.name && c.year === card.year); });
+  cards.push(card);
+  localStorage.setItem('mma_cards', JSON.stringify(cards));
+  renderSavedCards();
+
+  var btn = document.getElementById('createBtn');
+  btn.textContent = '저장 완료 ✓';
+  btn.style.background = '#1a6b1a';
+  setTimeout(function() {
+    btn.textContent = '카드 생성';
+    btn.style.background = '#d4001a';
+  }, 1600);
+});
+
+function renderSavedCards() {
+  var cards = JSON.parse(localStorage.getItem('mma_cards') || '[]');
+  var list = document.getElementById('cardList');
+  list.innerHTML = '';
+  if (cards.length === 0) {
+    list.innerHTML = '<span class="no-cards">아직 저장된 카드가 없습니다</span>';
+    return;
+  }
+  cards.forEach(function(card) {
+    var item = document.createElement('div');
+    item.className = 'card-item';
+    item.draggable = true;
+    item.dataset.id = card.id;
+    item.innerHTML =
+      '<img src="' + card.image + '" alt="' + card.name + '">' +
+      '<div class="card-name">' + card.name + (card.year ? ' ' + card.year : '') + '</div>' +
+      '<button class="card-del" title="삭제">✕</button>';
+    item.addEventListener('dragstart', function(e) {
+      e.dataTransfer.setData('cardId', card.id);
+    });
+    item.querySelector('.card-del').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var all = JSON.parse(localStorage.getItem('mma_cards') || '[]');
+      localStorage.setItem('mma_cards', JSON.stringify(all.filter(function(c) { return c.id !== card.id; })));
+      renderSavedCards();
+    });
+    list.appendChild(item);
+  });
+}
 
 document.getElementById('saveBtn').addEventListener('click', function() {
   try {
@@ -526,6 +690,7 @@ function redraw() {
 
 window.onload = function() {
   redraw();
+  renderSavedCards();
 };
 </script>
 

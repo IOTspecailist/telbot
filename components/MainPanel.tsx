@@ -41,6 +41,9 @@ export default function MainPanel() {
             <a href="/mma-stat.html" className="notify-btn notify-btn-nav">
               MMA STAT 생성기
             </a>
+            <a href="/mma-predict.html" className="notify-btn notify-btn-nav">
+              MMA 승자 예측
+            </a>
           </section>
 
           <section className="notify-section">
