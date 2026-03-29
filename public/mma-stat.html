@@ -232,21 +232,29 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
 <script>
 var STATS = [
   {key:'fightiq',   label:'Fight IQ',  val:7},
+  {key:'power',     label:'Power',     val:7},
   {key:'striking',  label:'Striking',  val:8},
-  {key:'wrestling', label:'Wrestling', val:7},
-  {key:'jiujitsu',  label:'Jiu-Jitsu', val:8},
   {key:'chin',      label:'Chin',      val:6},
-  {key:'cardio',    label:'Cardio',    val:9},
+  {key:'wrestling', label:'Wrestling', val:7},
   {key:'speed',     label:'Speed',     val:8},
-  {key:'power',     label:'Power',     val:7}
+  {key:'jiujitsu',  label:'Jiu-Jitsu', val:8}
 ];
 
 var EXTRA = [
+  {key:'cardio',    label:'Cardio',    val:9},
   {key:'micwork',   label:'Mic Work',  val:7},
   {key:'aura',      label:'Aura',      val:8}
 ];
 
-var ANGLES = [-112.5,-67.5,-22.5,22.5,67.5,112.5,157.5,-157.5];
+// 7개 스탯 — 시계방향 360/7 간격, 12시 방향(-90°)부터
+var _step = 360/7;
+var ANGLES = [0,1,2,3,4,5,6].map(function(i){ return -90 + _step*i; });
+
+// 비선형 스케일: 1·10은 극적으로, 5는 약하게 반영
+function curveR(val) {
+  var t = (val - 1) / 9; // 0(val=1) ~ 1(val=10)
+  return Math.max(0.02, t * t); // 제곱 곡선
+}
 var _animId = null;
 var _animT = 0;
 
@@ -543,10 +551,10 @@ function draw() {
     ctx.stroke();
   });
 
-  // 데이터 폴리곤
+  // 데이터 폴리곤 (비선형 스케일)
   var pts = STATS.map(function(s, i) {
     var rad = toRad(ANGLES[i]);
-    return {x: cx + Math.cos(rad)*(s.val/10)*maxR, y: cy + Math.sin(rad)*(s.val/10)*maxR};
+    return {x: cx + Math.cos(rad)*curveR(s.val)*maxR, y: cy + Math.sin(rad)*curveR(s.val)*maxR};
   });
 
   var grad = ctx.createRadialGradient(cx, cy-20, 0, cx, cy, maxR);
