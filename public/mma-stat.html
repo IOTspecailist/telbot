@@ -9,8 +9,8 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-  background:#111;
-  color:#fff;
+  background:#f2ede4;
+  color:#1a1a1a;
   font-family:'Barlow Condensed',sans-serif;
   padding:16px;
   display:flex;
@@ -21,14 +21,15 @@ body {
 .panel {
   width:100%;
   max-width:420px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.1);
+  background:#fff;
+  border:1px solid rgba(212,0,26,0.15);
   border-left:3px solid #d4001a;
   border-radius:4px;
   padding:14px;
   display:flex;
   flex-direction:column;
   gap:10px;
+  box-shadow:0 1px 6px rgba(0,0,0,0.06);
 }
 .panel h2 {
   font-family:'Bebas Neue',sans-serif;
@@ -38,16 +39,17 @@ body {
 }
 input[type=text] {
   width:100%;
-  background:rgba(0,0,0,0.6);
-  border:1px solid rgba(255,255,255,0.15);
+  background:#fafafa;
+  border:1px solid rgba(0,0,0,0.13);
   border-radius:3px;
-  color:#fff;
+  color:#1a1a1a;
   font-family:'Bebas Neue',sans-serif;
   font-size:20px;
   letter-spacing:2px;
   padding:8px 12px;
   outline:none;
 }
+input[type=text]:focus { border-color:#d4001a; }
 .grid {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -55,7 +57,7 @@ input[type=text] {
 }
 .stat-item { display:flex; flex-direction:column; gap:3px; }
 .stat-top { display:flex; justify-content:space-between; align-items:center; }
-.stat-top span:first-child { font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+.stat-top span:first-child { font-size:11px; color:#999; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
 .stat-top .num { font-family:'Bebas Neue',sans-serif; font-size:18px; color:#d4001a; }
 input[type=range] { width:100%; accent-color:#d4001a; }
 .extra-grid {
@@ -63,7 +65,7 @@ input[type=range] { width:100%; accent-color:#d4001a; }
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
-canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
+canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shadow:0 2px 12px rgba(0,0,0,0.15); }
 .btn {
   width:100%;
   max-width:420px;
@@ -77,6 +79,7 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
   color:#fff;
   cursor:pointer;
 }
+.btn:hover { background:#b8001a; }
 .hint {
   display:none;
   width:100%;
@@ -85,8 +88,8 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
   text-align:center;
   font-size:13px;
   color:#d4001a;
-  background:rgba(212,0,26,0.07);
-  border:1px solid rgba(212,0,26,0.3);
+  background:rgba(212,0,26,0.06);
+  border:1px solid rgba(212,0,26,0.25);
   border-radius:4px;
   font-weight:700;
   letter-spacing:1px;
@@ -101,15 +104,16 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
   width:100%;
   max-width:420px;
   padding:11px;
-  background:transparent;
-  border:1px solid rgba(255,255,255,0.15);
+  background:#fff;
+  border:1px solid rgba(0,0,0,0.15);
   border-radius:4px;
   font-family:'Bebas Neue',sans-serif;
   font-size:14px;
   letter-spacing:3px;
-  color:#666;
+  color:#888;
   cursor:pointer;
 }
+.btn-secondary:hover { border-color:#d4001a; color:#d4001a; }
 .saved-section {
   width:100%;
   max-width:420px;
@@ -126,14 +130,6 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
   color:#d4001a;
   letter-spacing:3px;
 }
-.saved-header a {
-  font-size:12px;
-  color:#ffd700;
-  text-decoration:none;
-  letter-spacing:1px;
-  font-weight:700;
-}
-.saved-header a:hover { color:#fff; }
 .card-list { display:flex; flex-wrap:wrap; gap:10px; }
 .card-item {
   position:relative;
@@ -148,13 +144,13 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
   width:88px;
   height:120px;
   border-radius:3px;
-  border:2px solid rgba(255,255,255,0.08);
+  border:2px solid rgba(0,0,0,0.08);
 }
 .card-item:hover img { border-color:#d4001a; }
 .card-item .card-name {
   font-family:'Bebas Neue',sans-serif;
   font-size:10px;
-  color:#bbb;
+  color:#777;
   text-align:center;
   letter-spacing:1px;
   max-width:88px;
@@ -165,8 +161,8 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
 .card-del {
   position:absolute;
   top:3px; right:3px;
-  background:rgba(0,0,0,0.75);
-  border:none; color:#aaa;
+  background:rgba(0,0,0,0.5);
+  border:none; color:#ccc;
   font-size:10px;
   width:16px; height:16px;
   border-radius:2px;
@@ -177,10 +173,10 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; }
   padding:0;
 }
 .card-item:hover .card-del { display:block; }
-.card-del:hover { color:#fff; }
+.card-del:hover { color:#fff; background:rgba(212,0,26,0.8); }
 .no-cards {
   font-size:12px;
-  color:#444;
+  color:#bbb;
   font-weight:700;
   letter-spacing:1px;
   padding:8px 0;
@@ -459,56 +455,96 @@ function draw() {
   var total = getTotal();
   ctx.font = 'bold 26px "Bebas Neue", sans-serif';
 
-  if (total >= 90) {
+  if (total >= 100) {
+    // ★ PERFECT — 레인보우 shimmer
+    var pulse = (Math.sin(_animT * 0.004) + 1) * 0.5;
+    var hue = (_animT * 0.3) % 360;
+    var tg = ctx.createLinearGradient(W/2 - 100, 70, W/2 + 100, 90);
+    tg.addColorStop(0,    'hsl(' + hue + ',100%,75%)');
+    tg.addColorStop(0.25, 'hsl(' + ((hue+90)%360) + ',100%,85%)');
+    tg.addColorStop(0.5,  '#ffffff');
+    tg.addColorStop(0.75, 'hsl(' + ((hue+180)%360) + ',100%,80%)');
+    tg.addColorStop(1,    'hsl(' + ((hue+270)%360) + ',100%,75%)');
+    ctx.fillStyle = tg;
+    ctx.shadowColor = 'rgba(255,255,255,' + (0.8 + pulse * 0.2) + ')';
+    ctx.shadowBlur = 18 + pulse * 20;
+    ctx.fillText('RATING  ' + total, W/2, 80);
+    ctx.shadowBlur = 0;
+    ctx.save();
+    var sparks = [{ox:-95,oy:0},{ox:95,oy:0},{ox:-60,oy:-14},{ox:60,oy:-14},{ox:0,oy:-16},{ox:-78,oy:12},{ox:78,oy:12},{ox:-30,oy:14},{ox:30,oy:14}];
+    sparks.forEach(function(sp, idx) {
+      var alpha = (Math.sin(_animT * 0.005 + idx * 0.9) + 1) * 0.5;
+      var sz = 1.5 + alpha * 2.5;
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.strokeStyle = 'hsl(' + ((hue + idx*40)%360) + ',100%,80%)';
+      ctx.lineWidth = sz * 0.7;
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = 6;
+      var sx = W/2 + sp.ox, sy = 80 + sp.oy;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - sz*2); ctx.lineTo(sx, sy + sz*2);
+      ctx.moveTo(sx - sz*2, sy); ctx.lineTo(sx + sz*2, sy);
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    ctx.restore();
+  } else if (total >= 90) {
+    // ◆ ELITE — 다이아 shimmer (cyan)
     var pulse = (Math.sin(_animT * 0.004) + 1) * 0.5;
     var tg = ctx.createLinearGradient(W/2 - 90, 70, W/2 + 90, 90);
     var shift = (Math.sin(_animT * 0.003) + 1) * 0.5;
-    tg.addColorStop(0,              '#a8edff');
-    tg.addColorStop(Math.max(0, shift - 0.1), '#a8edff');
-    tg.addColorStop(shift,          '#ffffff');
-    tg.addColorStop(Math.min(1, shift + 0.1), '#c8f4ff');
-    tg.addColorStop(1,              '#a8edff');
+    tg.addColorStop(0,                          '#a8edff');
+    tg.addColorStop(Math.max(0, shift - 0.1),   '#a8edff');
+    tg.addColorStop(shift,                       '#ffffff');
+    tg.addColorStop(Math.min(1, shift + 0.1),   '#c8f4ff');
+    tg.addColorStop(1,                          '#a8edff');
     ctx.fillStyle = tg;
     ctx.shadowColor = 'rgba(160,235,255,' + (0.7 + pulse * 0.3) + ')';
     ctx.shadowBlur = 12 + pulse * 16;
     ctx.fillText('RATING  ' + total, W/2, 80);
     ctx.shadowBlur = 0;
-    // 반짝이 파티클
     ctx.save();
     var sparks = [{ox:-95,oy:0},{ox:95,oy:0},{ox:-60,oy:-14},{ox:60,oy:-14},{ox:0,oy:-16},{ox:-78,oy:12},{ox:78,oy:12}];
     sparks.forEach(function(sp, idx) {
       var alpha = (Math.sin(_animT * 0.005 + idx * 1.1) + 1) * 0.5;
       var sz = 1.5 + alpha * 2;
       ctx.globalAlpha = alpha * 0.85;
-      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = sz * 0.7;
       ctx.shadowColor = '#a8edff';
       ctx.shadowBlur = 6;
-      // 십자 별 모양
       var sx = W/2 + sp.ox, sy = 80 + sp.oy;
       ctx.beginPath();
       ctx.moveTo(sx, sy - sz*2); ctx.lineTo(sx, sy + sz*2);
       ctx.moveTo(sx - sz*2, sy); ctx.lineTo(sx + sz*2, sy);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = sz * 0.7;
       ctx.stroke();
     });
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     ctx.restore();
   } else if (total >= 80) {
+    // ● GREAT — 레드 글로우
     ctx.fillStyle = '#ff3344';
-    ctx.shadowColor = 'rgba(255,51,68,0.65)';
-    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(255,51,68,0.7)';
+    ctx.shadowBlur = 12;
     ctx.fillText('RATING  ' + total, W/2, 80);
     ctx.shadowBlur = 0;
   } else if (total >= 70) {
+    // ● GOOD — 골드
     ctx.fillStyle = '#ffd700';
-    ctx.shadowColor = 'rgba(255,215,0,0.55)';
-    ctx.shadowBlur = 8;
+    ctx.shadowColor = 'rgba(255,215,0,0.6)';
+    ctx.shadowBlur = 9;
+    ctx.fillText('RATING  ' + total, W/2, 80);
+    ctx.shadowBlur = 0;
+  } else if (total >= 60) {
+    // ● AVERAGE — 소프트 블루
+    ctx.fillStyle = '#66bbee';
+    ctx.shadowColor = 'rgba(100,180,240,0.5)';
+    ctx.shadowBlur = 6;
     ctx.fillText('RATING  ' + total, W/2, 80);
     ctx.shadowBlur = 0;
   } else {
-    ctx.fillStyle = '#888888';
+    // ● LOW — 그레이
+    ctx.fillStyle = '#777777';
     ctx.shadowBlur = 0;
     ctx.fillText('RATING  ' + total, W/2, 80);
   }
