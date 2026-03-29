@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animation Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#f5f0e8;
+  font-family:'Barlow Condensed',sans-serif;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+}
+h1 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;
+  letter-spacing:4px;
+  color:#d4001a;
+  margin-bottom:4px;
+}
+p { font-size:13px; color:#888; letter-spacing:1px; font-weight:700; margin-bottom:8px; }
+.btn-list {
+  width:100%;
+  max-width:420px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.demo-btn {
+  width:100%;
+  padding:14px;
+  background:#d4001a;
+  border:none;
+  border-radius:5px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px;
+  letter-spacing:3px;
+  color:#fff;
+  cursor:pointer;
+}
+.demo-btn:hover { background:#b50016; }
+
+/* ── 공통 오버레이 ── */
+.overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:999;
+  align-items:center;
+  justify-content:center;
+}
+.overlay.show { display:flex; }
+
+/* ① VS 충돌 */
+#ov1 { background:rgba(0,0,0,0.85); flex-direction:column; gap:0; }
+.clash-wrap {
+  display:flex;
+  align-items:center;
+  gap:0;
+  position:relative;
+}
+.clash-card {
+  width:110px;
+  height:50px;
+  background:#d4001a;
+  border-radius:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;
+  color:#fff;
+  letter-spacing:2px;
+  position:relative;
+}
+#clashA { transform:translateX(-160px); transition:transform 0.4s cubic-bezier(.4,0,.2,1); }
+#clashB { transform:translateX(160px);  transition:transform 0.4s cubic-bezier(.4,0,.2,1); }
+.clash-vs {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:48px;
+  color:#d4001a;
+  letter-spacing:4px;
+  opacity:0;
+  transition:opacity 0.2s;
+  position:absolute;
+  text-shadow:0 0 20px rgba(212,0,26,0.8);
+  z-index:10;
+}
+.clash-wrap.shaking {
+  animation: shake 0.35s ease;
+}
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-6px)}
+  80%{transform:translateX(6px)}
+}
+
+/* ② 카운트다운 */
+#ov2 { background:rgba(0,0,0,0.9); }
+.countdown-num {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:160px;
+  color:#d4001a;
+  letter-spacing:4px;
+  text-shadow:0 0 40px rgba(212,0,26,0.7);
+  animation: none;
+}
+@keyframes popnum {
+  0%  { transform:scale(1.6); opacity:0; }
+  20% { transform:scale(1.0); opacity:1; }
+  70% { transform:scale(1.0); opacity:1; }
+  100%{ transform:scale(0.6); opacity:0; }
+}
+.fight-text {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:80px;
+  color:#fff;
+  letter-spacing:8px;
+  text-shadow:0 0 30px rgba(255,255,255,0.6);
+}
+
+/* ③ 로딩 바 */
+#ov3 { background:rgba(0,0,0,0.88); flex-direction:column; gap:18px; }
+.analyzing-text {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;
+  letter-spacing:6px;
+  color:#d4001a;
+}
+.loading-bar-bg {
+  width:260px;
+  height:10px;
+  background:rgba(255,255,255,0.1);
+  border-radius:5px;
+  overflow:hidden;
+}
+.loading-bar-fill {
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#a00014,#ff3344);
+  border-radius:5px;
+  transition:width 0.9s ease;
+}
+.loading-pct {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:14px;
+  color:#888;
+  letter-spacing:3px;
+}
+
+/* ④ 플래시 */
+#ov4 { background:#fff; }
+#ov4.flash-red { background:#d4001a; }
+
+/* ⑤ 스캔 라인 */
+#ov5 { background:rgba(0,0,0,0.88); overflow:hidden; }
+.scan-label {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;
+  letter-spacing:5px;
+  color:#d4001a;
+  position:absolute;
+  top:40%;
+}
+.scan-line {
+  position:absolute;
+  left:0; right:0;
+  height:3px;
+  background:linear-gradient(90deg,transparent,#d4001a,#ff3344,#d4001a,transparent);
+  box-shadow:0 0 16px rgba(212,0,26,0.9);
+  top:-3px;
+}
+.scan-grid {
+  position:absolute;
+  inset:0;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 12px);
+}
+
+/* ⑥ 숫자 롤링 */
+#ov6 { background:rgba(0,0,0,0.9); flex-direction:column; gap:8px; }
+.rolling-label {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;
+  letter-spacing:4px;
+  color:#888;
+}
+.rolling-nums {
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.rolling-fighter {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.rolling-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;
+  letter-spacing:2px;
+  color:#fff;
+}
+.rolling-pct {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:56px;
+  letter-spacing:2px;
+  line-height:1;
+}
+.rolling-vs-sep {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;
+  color:#555;
+  letter-spacing:2px;
+}
+
+/* ⑦ 카드 플립 */
+#ov7 { background:rgba(0,0,0,0.88); gap:20px; }
+.flip-wrap {
+  perspective:600px;
+  width:110px;
+  height:150px;
+}
+.flip-inner {
+  width:100%;
+  height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:transform 0.6s ease;
+}
+.flip-inner.flipped { transform:rotateY(180deg); }
+.flip-front, .flip-back {
+  position:absolute;
+  inset:0;
+  border-radius:6px;
+  backface-visibility:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;
+  letter-spacing:2px;
+  color:#fff;
+}
+.flip-front { background:#1a1a1a; border:2px solid rgba(255,255,255,0.15); }
+.flip-back  { background:#d4001a; border:2px solid rgba(212,0,26,0.6); transform:rotateY(180deg); }
+.flip-vs {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;
+  color:#d4001a;
+  letter-spacing:3px;
+}
+</style>
+</head>
+<body>
+
+<h1>ANIMATION DEMO</h1>
+<p>버튼을 눌러서 각 효과를 미리보기하세요</p>
+
+<div class="btn-list">
+  <button class="demo-btn" onclick="play1()">① VS 충돌 효과</button>
+  <button class="demo-btn" onclick="play2()">② 카운트다운  3·2·1·FIGHT</button>
+  <button class="demo-btn" onclick="play3()">③ 로딩 바  ANALYZING...</button>
+  <button class="demo-btn" onclick="play4()">④ 플래시  화면 번쩍</button>
+  <button class="demo-btn" onclick="play5()">⑤ 스캔 라인  분석 스캔</button>
+  <button class="demo-btn" onclick="play6()">⑥ 숫자 롤링  슬롯머신</button>
+  <button class="demo-btn" onclick="play7()">⑦ 카드 플립  뒤집기</button>
+</div>
+
+<!-- ① VS 충돌 -->
+<div class="overlay" id="ov1">
+  <div class="clash-wrap" id="clashWrap">
+    <div class="clash-card" id="clashA">JON JONES</div>
+    <div class="clash-vs" id="clashVs">VS</div>
+    <div class="clash-card" id="clashB">STIPE</div>
+  </div>
+</div>
+
+<!-- ② 카운트다운 -->
+<div class="overlay" id="ov2">
+  <div class="countdown-num" id="cdNum">3</div>
+</div>
+
+<!-- ③ 로딩 바 -->
+<div class="overlay" id="ov3">
+  <div class="analyzing-text">ANALYZING...</div>
+  <div class="loading-bar-bg">
+    <div class="loading-bar-fill" id="loadBar"></div>
+  </div>
+  <div class="loading-pct" id="loadPct">0%</div>
+</div>
+
+<!-- ④ 플래시 -->
+<div class="overlay" id="ov4"></div>
+
+<!-- ⑤ 스캔 라인 -->
+<div class="overlay" id="ov5">
+  <div class="scan-grid"></div>
+  <div class="scan-label">CALCULATING WIN PROBABILITY...</div>
+  <div class="scan-line" id="scanLine"></div>
+</div>
+
+<!-- ⑥ 숫자 롤링 -->
+<div class="overlay" id="ov6">
+  <div class="rolling-label">WIN PROBABILITY</div>
+  <div class="rolling-nums">
+    <div class="rolling-fighter">
+      <div class="rolling-name">JON JONES</div>
+      <div class="rolling-pct" id="rollA" style="color:#ff3344">00%</div>
+    </div>
+    <div class="rolling-vs-sep">VS</div>
+    <div class="rolling-fighter">
+      <div class="rolling-name">STIPE</div>
+      <div class="rolling-pct" id="rollB" style="color:#0077ff">00%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑦ 카드 플립 -->
+<div class="overlay" id="ov7">
+  <div class="flip-wrap">
+    <div class="flip-inner" id="flipA">
+      <div class="flip-front">JON JONES</div>
+      <div class="flip-back">68%</div>
+    </div>
+  </div>
+  <div class="flip-vs">VS</div>
+  <div class="flip-wrap">
+    <div class="flip-inner" id="flipB">
+      <div class="flip-front">STIPE</div>
+      <div class="flip-back">32%</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function hideAll() {
+  document.querySelectorAll('.overlay').forEach(function(o) { o.classList.remove('show'); });
+}
+
+// ① VS 충돌
+function play1() {
+  hideAll();
+  var ov = document.getElementById('ov1');
+  var wrap = document.getElementById('clashWrap');
+  var cA = document.getElementById('clashA');
+  var cB = document.getElementById('clashB');
+  var vs = document.getElementById('clashVs');
+  wrap.classList.remove('shaking');
+  cA.style.transition = 'none'; cB.style.transition = 'none';
+  cA.style.transform = 'translateX(-160px)';
+  cB.style.transform = 'translateX(160px)';
+  vs.style.opacity = '0';
+  ov.classList.add('show');
+  setTimeout(function() {
+    cA.style.transition = 'transform 0.4s cubic-bezier(.4,0,.2,1)';
+    cB.style.transition = 'transform 0.4s cubic-bezier(.4,0,.2,1)';
+    cA.style.transform = 'translateX(-58px)';
+    cB.style.transform = 'translateX(58px)';
+  }, 80);
+  setTimeout(function() {
+    wrap.classList.add('shaking');
+    vs.style.opacity = '1';
+  }, 520);
+  setTimeout(function() { hideAll(); }, 1600);
+}
+
+// ② 카운트다운
+function play2() {
+  hideAll();
+  var ov = document.getElementById('ov2');
+  var el = document.getElementById('cdNum');
+  ov.classList.add('show');
+  var nums = ['3','2','1','FIGHT!'];
+  var i = 0;
+  function step() {
+    el.style.animation = 'none';
+    el.style.fontSize = nums[i] === 'FIGHT!' ? '72px' : '160px';
+    el.style.color = nums[i] === 'FIGHT!' ? '#ffffff' : '#d4001a';
+    el.textContent = nums[i];
+    void el.offsetWidth;
+    el.style.animation = 'popnum 0.7s ease forwards';
+    i++;
+    if (i < nums.length) setTimeout(step, 680);
+    else setTimeout(hideAll, 900);
+  }
+  step();
+}
+
+// ③ 로딩 바
+function play3() {
+  hideAll();
+  var ov = document.getElementById('ov3');
+  var bar = document.getElementById('loadBar');
+  var pct = document.getElementById('loadPct');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  pct.textContent = '0%';
+  ov.classList.add('show');
+  setTimeout(function() {
+    bar.style.transition = 'width 0.85s ease';
+    bar.style.width = '100%';
+    var start = Date.now();
+    var iv = setInterval(function() {
+      var p = Math.min(100, Math.round((Date.now() - start) / 8.5));
+      pct.textContent = p + '%';
+      if (p >= 100) clearInterval(iv);
+    }, 30);
+  }, 80);
+  setTimeout(hideAll, 1400);
+}
+
+// ④ 플래시
+function play4() {
+  hideAll();
+  var ov = document.getElementById('ov4');
+  var colors = ['rgba(255,255,255,0.95)','#d4001a','rgba(255,255,255,0.9)','rgba(0,0,0,0)'];
+  var times = [0, 200, 450, 750];
+  ov.classList.add('show');
+  ov.style.background = colors[0];
+  times.forEach(function(t, idx) {
+    if (idx === 0) return;
+    setTimeout(function() { ov.style.background = colors[idx]; }, t);
+  });
+  setTimeout(hideAll, 1100);
+}
+
+// ⑤ 스캔 라인
+function play5() {
+  hideAll();
+  var ov = document.getElementById('ov5');
+  var line = document.getElementById('scanLine');
+  line.style.transition = 'none';
+  line.style.top = '-3px';
+  ov.classList.add('show');
+  setTimeout(function() {
+    line.style.transition = 'top 0.9s linear';
+    line.style.top = 'calc(100% + 3px)';
+  }, 60);
+  setTimeout(hideAll, 1200);
+}
+
+// ⑥ 숫자 롤링
+function play6() {
+  hideAll();
+  var ov = document.getElementById('ov6');
+  var elA = document.getElementById('rollA');
+  var elB = document.getElementById('rollB');
+  var targetA = 68, targetB = 32;
+  elA.textContent = '00%'; elB.textContent = '00%';
+  ov.classList.add('show');
+  var start = Date.now();
+  var dur = 950;
+  function tick() {
+    var p = Math.min(1, (Date.now() - start) / dur);
+    var ease = 1 - Math.pow(1 - p, 3);
+    var a = Math.round(ease * targetA);
+    var b = Math.round(ease * targetB);
+    elA.textContent = String(a).padStart(2,'0') + '%';
+    elB.textContent = String(b).padStart(2,'0') + '%';
+    if (p < 1) requestAnimationFrame(tick);
+    else setTimeout(hideAll, 500);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ⑦ 카드 플립
+function play7() {
+  hideAll();
+  var ov = document.getElementById('ov7');
+  var fA = document.getElementById('flipA');
+  var fB = document.getElementById('flipB');
+  fA.classList.remove('flipped');
+  fB.classList.remove('flipped');
+  ov.classList.add('show');
+  setTimeout(function() { fA.classList.add('flipped'); }, 200);
+  setTimeout(function() { fB.classList.add('flipped'); }, 400);
+  setTimeout(hideAll, 1500);
+}
+
+// 오버레이 클릭으로 닫기
+document.querySelectorAll('.overlay').forEach(function(o) {
+  o.addEventListener('click', hideAll);
+});
+</script>
+</body>
+</html>
