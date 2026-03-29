@@ -8,8 +8,8 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-  background:#111;
-  color:#fff;
+  background:#f2ede4;
+  color:#1a1a1a;
   font-family:'Barlow Condensed',sans-serif;
   padding:16px;
   display:flex;
@@ -24,13 +24,16 @@ body {
   display:flex;
   align-items:center;
   justify-content:space-between;
+  gap:8px;
 }
+.top-bar-nav { display:flex; gap:8px; align-items:center; }
 .top-bar a {
   font-size:12px;
-  color:#888;
+  color:#666;
   text-decoration:none;
   letter-spacing:1px;
   font-weight:700;
+  white-space:nowrap;
 }
 .top-bar a:hover { color:#d4001a; }
 .top-bar h1 {
@@ -49,6 +52,48 @@ body {
   border-bottom:1px solid rgba(212,0,26,0.3);
   padding-bottom:6px;
 }
+/* 애니메이션 선택 바 */
+.anim-bar {
+  width:100%;
+  max-width:480px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.anim-bar label {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;
+  letter-spacing:2px;
+  color:#888;
+  white-space:nowrap;
+}
+.anim-select {
+  flex:1;
+  background:#fff;
+  border:1px solid rgba(212,0,26,0.3);
+  border-radius:3px;
+  color:#1a1a1a;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;
+  letter-spacing:1px;
+  padding:5px 8px;
+  cursor:pointer;
+  outline:none;
+}
+.anim-select:focus { border-color:#d4001a; }
+.btn-reset {
+  padding:5px 14px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;
+  letter-spacing:2px;
+  border:none;
+  border-radius:3px;
+  cursor:pointer;
+  background:#888;
+  color:#fff;
+  white-space:nowrap;
+}
+.btn-reset:hover { background:#555; }
 /* 카드 풀 */
 .card-pool {
   width:100%;
@@ -72,15 +117,16 @@ body {
   width:80px;
   height:109px;
   border-radius:3px;
-  border:2px solid rgba(255,255,255,0.08);
+  border:2px solid rgba(0,0,0,0.1);
   display:block;
   pointer-events:none;
+  object-fit:cover;
 }
 .pool-card:hover img { border-color:rgba(212,0,26,0.6); }
 .pool-card .card-name {
   font-family:'Bebas Neue',sans-serif;
   font-size:10px;
-  color:#bbb;
+  color:#555;
   letter-spacing:1px;
   text-align:center;
   max-width:80px;
@@ -103,7 +149,7 @@ body {
 .slot-btn:hover { opacity:0.8; }
 .no-cards-msg {
   font-size:12px;
-  color:#444;
+  color:#aaa;
   font-weight:700;
   letter-spacing:1px;
   padding:20px 0;
@@ -121,8 +167,8 @@ body {
 }
 .drop-zone {
   flex:1;
-  min-height:170px;
-  border:2px dashed rgba(255,255,255,0.12);
+  min-height:150px;
+  border:2px dashed rgba(0,0,0,0.15);
   border-radius:6px;
   display:flex;
   flex-direction:column;
@@ -132,59 +178,79 @@ body {
   padding:12px;
   transition:border-color 0.2s, background 0.2s;
   position:relative;
+  background:#fff;
 }
 .drop-zone.drag-over {
   border-color:#d4001a;
-  background:rgba(212,0,26,0.06);
+  background:rgba(212,0,26,0.04);
 }
 .drop-zone.filled {
   border-style:solid;
-  border-color:rgba(212,0,26,0.35);
-  justify-content:flex-start;
-  padding:8px;
+  border-color:rgba(212,0,26,0.5);
+  background:linear-gradient(145deg,#fff5f5,#fff);
+  justify-content:center;
+  padding:10px;
 }
 .drop-zone.filled-b {
   border-style:solid;
-  border-color:rgba(0,85,212,0.45);
-  justify-content:flex-start;
-  padding:8px;
+  border-color:rgba(0,85,212,0.5);
+  background:linear-gradient(145deg,#f0f4ff,#fff);
+  justify-content:center;
+  padding:10px;
 }
 .zone-label {
   font-family:'Bebas Neue',sans-serif;
   font-size:11px;
   letter-spacing:3px;
-  color:#555;
+  color:#bbb;
 }
 .zone-placeholder {
   font-size:11px;
-  color:#3a3a3a;
+  color:#ccc;
   text-align:center;
   line-height:1.7;
   font-weight:700;
   letter-spacing:1px;
 }
-.zone-card-img {
-  width:100%;
-  border-radius:3px;
-  display:block;
-}
-.zone-card-name {
+/* 드롭존 채워진 상태 — 이름 중심 */
+.zone-fighter-name {
   font-family:'Bebas Neue',sans-serif;
-  font-size:13px;
-  letter-spacing:2px;
+  font-size:22px;
+  letter-spacing:3px;
   text-align:center;
-  color:#fff;
+  line-height:1.1;
+  word-break:break-word;
+}
+.zone-fighter-name-a { color:#d4001a; }
+.zone-fighter-name-b { color:#0055d4; }
+.zone-fighter-score {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;
+  letter-spacing:2px;
+  color:#999;
+  margin-top:2px;
+}
+.zone-fighter-tags {
+  display:flex;
+  flex-wrap:wrap;
+  gap:3px;
+  justify-content:center;
   margin-top:4px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  max-width:100%;
+}
+.zone-tag {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:9px;
+  letter-spacing:1px;
+  padding:1px 5px;
+  border-radius:2px;
+  color:#888;
+  background:rgba(0,0,0,0.06);
 }
 .zone-clear {
   position:absolute;
   top:6px; right:6px;
-  background:rgba(0,0,0,0.7);
-  border:none; color:#666;
+  background:rgba(0,0,0,0.1);
+  border:none; color:#999;
   font-size:11px;
   width:20px; height:20px;
   border-radius:3px;
@@ -194,7 +260,7 @@ body {
   justify-content:center;
   padding:0;
 }
-.zone-clear:hover { color:#fff; }
+.zone-clear:hover { background:rgba(212,0,26,0.15); color:#d4001a; }
 .vs-badge {
   font-family:'Bebas Neue',sans-serif;
   font-size:30px;
@@ -203,16 +269,17 @@ body {
   flex-shrink:0;
   display:flex;
   align-items:center;
-  text-shadow:0 0 16px rgba(212,0,26,0.5);
+  text-shadow:0 0 12px rgba(212,0,26,0.3);
 }
 /* 결과 */
 .result-section {
   width:100%;
   max-width:480px;
-  background:rgba(255,255,255,0.02);
-  border:1px solid rgba(212,0,26,0.3);
+  background:#fff;
+  border:1px solid rgba(212,0,26,0.2);
   border-radius:6px;
   overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
 }
 .result-header {
   background:linear-gradient(90deg,#d4001a,#8a0010);
@@ -220,6 +287,7 @@ body {
   font-family:'Bebas Neue',sans-serif;
   font-size:14px;
   letter-spacing:4px;
+  color:#fff;
 }
 .result-body {
   padding:16px;
@@ -237,6 +305,7 @@ body {
   font-family:'Bebas Neue',sans-serif;
   font-size:18px;
   letter-spacing:2px;
+  color:#1a1a1a;
 }
 .winner-tag {
   display:inline-block;
@@ -257,7 +326,7 @@ body {
 }
 .prob-bar-bg {
   height:10px;
-  background:rgba(255,255,255,0.06);
+  background:rgba(0,0,0,0.06);
   border-radius:5px;
   overflow:hidden;
 }
@@ -278,46 +347,285 @@ body {
   font-family:'Bebas Neue',sans-serif;
   font-size:11px;
   letter-spacing:2px;
-  color:#666;
+  color:#aaa;
   padding:5px 8px;
-  border-bottom:1px solid rgba(255,255,255,0.07);
+  border-bottom:1px solid rgba(0,0,0,0.07);
   text-align:center;
 }
 .stat-table th:first-child { text-align:left; }
 .stat-table td {
   padding:5px 8px;
-  border-bottom:1px solid rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(0,0,0,0.04);
   text-align:center;
   font-weight:700;
   letter-spacing:1px;
   font-size:13px;
+  color:#1a1a1a;
 }
 .stat-table td:first-child {
   text-align:left;
-  color:#888;
+  color:#999;
   font-size:11px;
   font-weight:700;
   letter-spacing:1px;
   text-transform:uppercase;
 }
-.td-win { color:#fff; font-family:'Bebas Neue',sans-serif; }
-.td-lose { color:#3a3a3a; }
-.td-tie { color:#666; }
-.td-adv-a { color:#ff3344; font-family:'Bebas Neue',sans-serif; font-size:11px; }
-.td-adv-b { color:#0077ff; font-family:'Bebas Neue',sans-serif; font-size:11px; }
-.td-adv-tie { color:#444; font-family:'Bebas Neue',sans-serif; font-size:11px; }
+.td-win { color:#1a1a1a; font-family:'Bebas Neue',sans-serif; }
+.td-lose { color:#ccc; }
+.td-tie { color:#aaa; }
+.td-adv-a { color:#d4001a; font-family:'Bebas Neue',sans-serif; font-size:11px; }
+.td-adv-b { color:#0055d4; font-family:'Bebas Neue',sans-serif; font-size:11px; }
+.td-adv-tie { color:#ccc; font-family:'Bebas Neue',sans-serif; font-size:11px; }
+
+/* ===== 애니메이션 오버레이 ===== */
+#animOverlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  pointer-events:none;
+  overflow:hidden;
+}
+
+/* --- FLASH --- */
+@keyframes flashSeq {
+  0%   { background:rgba(212,0,26,0.7); }
+  20%  { background:rgba(0,85,212,0.7); }
+  40%  { background:rgba(212,0,26,0.8); }
+  60%  { background:rgba(0,85,212,0.8); }
+  80%  { background:rgba(212,0,26,0.5); }
+  100% { background:transparent; }
+}
+.anim-flash { animation:flashSeq 0.9s ease-out forwards; }
+
+/* --- COUNTDOWN --- */
+.anim-countdown-wrap {
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.88);
+}
+.anim-countdown-num {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:160px;
+  letter-spacing:8px;
+  line-height:1;
+  color:#d4001a;
+  text-shadow:0 0 40px rgba(212,0,26,0.9);
+  animation:countPop 0.28s ease-out;
+}
+@keyframes countPop {
+  0%   { transform:scale(2.5); opacity:0; }
+  60%  { transform:scale(0.92); opacity:1; }
+  100% { transform:scale(1); opacity:1; }
+}
+.anim-fight-text {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:80px;
+  letter-spacing:12px;
+  color:#fff;
+  text-shadow:0 0 30px rgba(255,255,255,0.8);
+  animation:fightPop 0.3s ease-out;
+}
+@keyframes fightPop {
+  0%   { transform:scaleX(0.2); opacity:0; }
+  100% { transform:scaleX(1); opacity:1; }
+}
+
+/* --- GLITCH --- */
+.anim-glitch-wrap {
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.92);
+}
+.glitch-text {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:90px;
+  letter-spacing:12px;
+  color:#fff;
+  position:relative;
+  animation:glitchMain 0.9s steps(1) forwards;
+}
+.glitch-text::before, .glitch-text::after {
+  content:attr(data-text);
+  position:absolute;
+  left:0; top:0;
+}
+.glitch-text::before {
+  color:#ff0033;
+  animation:glitchL 0.9s steps(1) forwards;
+  clip-path:polygon(0 30%,100% 30%,100% 55%,0 55%);
+}
+.glitch-text::after {
+  color:#0066ff;
+  animation:glitchR 0.9s steps(1) forwards;
+  clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%);
+}
+@keyframes glitchMain {
+  0%,10%  { transform:skewX(0deg); opacity:1; }
+  15%     { transform:skewX(-8deg); opacity:0.8; }
+  20%     { transform:skewX(6deg); opacity:1; }
+  30%     { transform:skewX(-4deg); }
+  40%,100%{ transform:skewX(0deg); opacity:1; }
+}
+@keyframes glitchL {
+  0%,9%  { transform:translate(0); }
+  10%    { transform:translate(-8px,2px); }
+  20%    { transform:translate(6px,-2px); }
+  30%    { transform:translate(-4px,1px); }
+  40%,100%{ transform:translate(0); }
+}
+@keyframes glitchR {
+  0%,14% { transform:translate(0); }
+  15%    { transform:translate(8px,-2px); }
+  25%    { transform:translate(-5px,3px); }
+  35%    { transform:translate(3px,-1px); }
+  40%,100%{ transform:translate(0); }
+}
+
+/* --- CLASH --- */
+.anim-clash-wrap {
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.9);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.clash-side {
+  position:absolute;
+  top:0; bottom:0;
+  width:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.clash-side-a {
+  left:0;
+  background:linear-gradient(135deg,#6a0010,#d4001a);
+  animation:clashA 0.9s cubic-bezier(.22,1,.36,1) forwards;
+}
+.clash-side-b {
+  right:0;
+  background:linear-gradient(225deg,#003a99,#0077ff);
+  animation:clashB 0.9s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes clashA {
+  0%   { transform:translateX(-100%); }
+  55%  { transform:translateX(8%); }
+  70%  { transform:translateX(-3%); }
+  85%  { transform:translateX(2%); }
+  100% { transform:translateX(0%); }
+}
+@keyframes clashB {
+  0%   { transform:translateX(100%); }
+  55%  { transform:translateX(-8%); }
+  70%  { transform:translateX(3%); }
+  85%  { transform:translateX(-2%); }
+  100% { transform:translateX(0%); }
+}
+.clash-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;
+  letter-spacing:4px;
+  color:#fff;
+  text-shadow:0 0 20px rgba(255,255,255,0.6);
+  padding:0 16px;
+  text-align:center;
+  word-break:break-word;
+}
+.clash-vs {
+  position:absolute;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:60px;
+  color:#fff;
+  letter-spacing:4px;
+  text-shadow:0 0 30px rgba(255,255,255,0.9), 0 0 60px rgba(255,200,0,0.6);
+  z-index:2;
+  animation:clashVS 0.9s ease-out forwards;
+}
+@keyframes clashVS {
+  0%   { transform:scale(0); opacity:0; }
+  60%  { transform:scale(1.4); opacity:1; }
+  100% { transform:scale(1); opacity:1; }
+}
+
+/* --- THUNDER --- */
+.anim-thunder-wrap {
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.93);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:8px;
+}
+.thunder-bolt {
+  font-size:100px;
+  animation:thunderAnim 0.9s steps(1) forwards;
+}
+@keyframes thunderAnim {
+  0%,100% { opacity:1; transform:scale(1); filter:drop-shadow(0 0 0px #fff); }
+  10%  { opacity:0; }
+  15%  { opacity:1; transform:scale(1.3); filter:drop-shadow(0 0 40px #fff) drop-shadow(0 0 80px #ffe066); }
+  25%  { opacity:0; }
+  30%  { opacity:1; transform:scale(0.95); filter:drop-shadow(0 0 20px #ffe066); }
+  45%  { opacity:0; }
+  50%  { opacity:1; transform:scale(1.15); filter:drop-shadow(0 0 60px #fff); }
+  65%  { opacity:1; filter:drop-shadow(0 0 10px #ffe066); }
+  80%  { opacity:0.7; transform:scale(1); }
+}
+.thunder-label {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:28px;
+  letter-spacing:8px;
+  color:#ffe066;
+  text-shadow:0 0 20px rgba(255,224,102,0.9);
+  animation:thunderLabel 0.9s ease-out forwards;
+}
+@keyframes thunderLabel {
+  0%  { opacity:0; transform:scaleX(2); }
+  40% { opacity:1; transform:scaleX(1); }
+  100%{ opacity:1; }
+}
 </style>
 </head>
 <body>
 
+<!-- 애니메이션 오버레이 -->
+<div id="animOverlay"></div>
+
 <div class="top-bar">
-  <a href="/mma-stat.html">← STAT 생성기</a>
+  <div class="top-bar-nav">
+    <a href="/">⌂ HOME</a>
+    <a href="/mma-stat.html">← STAT</a>
+  </div>
   <h1>WINNER PREDICTION</h1>
   <div style="width:80px"></div>
 </div>
 
 <div class="section-label">저장된 카드 — 드래그 또는 A·B 버튼으로 선택</div>
 <div id="cardPool" class="card-pool"></div>
+
+<div class="anim-bar">
+  <label>EFFECT</label>
+  <select id="animSelect" class="anim-select">
+    <option value="clash">⚡ CLASH — 카드 충돌</option>
+    <option value="countdown">🔢 COUNTDOWN — 3·2·1·FIGHT</option>
+    <option value="flash">💥 FLASH — 빨강·파랑 번쩍</option>
+    <option value="glitch">👾 GLITCH — 텍스트 글리치</option>
+    <option value="thunder">🌩 THUNDER — 번개</option>
+  </select>
+  <button class="btn-reset" onclick="resetAll()">RESET</button>
+</div>
 
 <div class="section-label">VS</div>
 <div class="vs-container" id="vsContainer">
@@ -341,8 +649,8 @@ body {
       <thead>
         <tr>
           <th>STAT</th>
-          <th id="thA" style="color:#ff3344">A</th>
-          <th id="thB" style="color:#0077ff">B</th>
+          <th id="thA" style="color:#d4001a">A</th>
+          <th id="thB" style="color:#0055d4">B</th>
           <th>우위</th>
         </tr>
       </thead>
@@ -389,6 +697,12 @@ function calcProb(cardA, cardB) {
   return { a: a, b: 100 - a };
 }
 
+function resetAll() {
+  slotA = null; slotB = null;
+  renderZone('A'); renderZone('B');
+  document.getElementById('result').style.display = 'none';
+}
+
 function renderPool() {
   var pool = document.getElementById('cardPool');
   var cards = getCards();
@@ -427,7 +741,8 @@ function placeCard(cardId, slot) {
   else slotB = card;
   renderZone(slot);
   if (slotA && slotB) {
-    setTimeout(renderResult, 80);
+    var effect = document.getElementById('animSelect').value;
+    playAnimation(effect, function() { renderResult(); });
   } else {
     document.getElementById('result').style.display = 'none';
   }
@@ -443,11 +758,20 @@ function renderZone(slot) {
       '<div class="zone-placeholder">카드를 여기에<br>드래그하세요</div>';
     return;
   }
+  var all = Object.assign({}, card.stats || {}, card.extra || {});
+  var topStats = Object.keys(WEIGHTS)
+    .sort(function(a,b){ return (all[b]||0)-(all[a]||0); })
+    .slice(0,3)
+    .map(function(k){ return STAT_LABELS[k]+' '+( all[k]||0); });
+  var score = Math.round(calcScore(card));
   zone.className = 'drop-zone ' + (slot === 'A' ? 'filled' : 'filled-b');
   zone.innerHTML =
     '<button class="zone-clear" onclick="clearSlot(\'' + slot + '\')">✕</button>' +
-    '<img class="zone-card-img" src="' + card.image + '" alt="' + card.name + '">' +
-    '<div class="zone-card-name">' + card.name + '</div>';
+    '<div class="zone-fighter-name zone-fighter-name-' + slot.toLowerCase() + '">' + card.name + '</div>' +
+    '<div class="zone-fighter-score">SCORE ' + score + '</div>' +
+    '<div class="zone-fighter-tags">' +
+      topStats.map(function(s){ return '<span class="zone-tag">'+s+'</span>'; }).join('') +
+    '</div>';
 }
 
 function clearSlot(slot) {
@@ -457,39 +781,118 @@ function clearSlot(slot) {
   document.getElementById('result').style.display = 'none';
 }
 
+/* ===== 애니메이션 ===== */
+function playAnimation(effect, done) {
+  var overlay = document.getElementById('animOverlay');
+  overlay.innerHTML = '';
+  overlay.style.display = 'block';
+  overlay.className = '';
+
+  if (effect === 'flash') {
+    overlay.classList.add('anim-flash');
+    setTimeout(function() {
+      overlay.style.display = 'none';
+      done();
+    }, 900);
+
+  } else if (effect === 'countdown') {
+    var wrap = document.createElement('div');
+    wrap.className = 'anim-countdown-wrap';
+    overlay.appendChild(wrap);
+    var nums = ['3','2','1'];
+    var i = 0;
+    function showNum() {
+      wrap.innerHTML = '<div class="anim-countdown-num">' + nums[i] + '</div>';
+      i++;
+      if (i < nums.length) {
+        setTimeout(showNum, 280);
+      } else {
+        setTimeout(function() {
+          wrap.innerHTML = '<div class="anim-fight-text">FIGHT</div>';
+          setTimeout(function() {
+            overlay.style.display = 'none';
+            done();
+          }, 350);
+        }, 280);
+      }
+    }
+    showNum();
+
+  } else if (effect === 'glitch') {
+    var wrap = document.createElement('div');
+    wrap.className = 'anim-glitch-wrap';
+    var nameA = slotA ? slotA.name.split(' ')[0] : 'A';
+    var nameB = slotB ? slotB.name.split(' ')[0] : 'B';
+    wrap.innerHTML =
+      '<div class="glitch-text" data-text="' + nameA + ' VS ' + nameB + '">' +
+        nameA + ' VS ' + nameB +
+      '</div>';
+    overlay.appendChild(wrap);
+    setTimeout(function() {
+      overlay.style.display = 'none';
+      done();
+    }, 1000);
+
+  } else if (effect === 'clash') {
+    var wrap = document.createElement('div');
+    wrap.className = 'anim-clash-wrap';
+    var nameA = slotA ? slotA.name : 'A';
+    var nameB = slotB ? slotB.name : 'B';
+    wrap.innerHTML =
+      '<div class="clash-side clash-side-a"><div class="clash-name">' + nameA + '</div></div>' +
+      '<div class="clash-side clash-side-b"><div class="clash-name">' + nameB + '</div></div>' +
+      '<div class="clash-vs">VS</div>';
+    overlay.appendChild(wrap);
+    setTimeout(function() {
+      overlay.style.display = 'none';
+      done();
+    }, 1000);
+
+  } else if (effect === 'thunder') {
+    var wrap = document.createElement('div');
+    wrap.className = 'anim-thunder-wrap';
+    wrap.innerHTML =
+      '<div class="thunder-bolt">⚡</div>' +
+      '<div class="thunder-label">FIGHT NIGHT</div>';
+    overlay.appendChild(wrap);
+    setTimeout(function() {
+      overlay.style.display = 'none';
+      done();
+    }, 1000);
+  } else {
+    done();
+  }
+}
+
 function renderResult() {
   var prob = calcProb(slotA, slotB);
   var winSlot = prob.a >= prob.b ? 'A' : 'B';
 
-  // Row A
   document.getElementById('probRowA').innerHTML =
     '<div class="prob-fighter">' +
       '<div>' +
         '<span class="prob-name">' + slotA.name + '</span>' +
         (winSlot === 'A' ? '<span class="winner-tag winner-tag-a">WINNER</span>' : '') +
       '</div>' +
-      '<span class="prob-pct" style="color:#ff3344">' + prob.a + '%</span>' +
+      '<span class="prob-pct" style="color:#d4001a">' + prob.a + '%</span>' +
     '</div>' +
     '<div class="prob-bar-bg"><div class="prob-bar bar-a" id="barA" style="width:0%"></div></div>';
 
-  // Row B
   document.getElementById('probRowB').innerHTML =
     '<div class="prob-fighter">' +
       '<div>' +
         '<span class="prob-name">' + slotB.name + '</span>' +
         (winSlot === 'B' ? '<span class="winner-tag winner-tag-b">WINNER</span>' : '') +
       '</div>' +
-      '<span class="prob-pct" style="color:#0077ff">' + prob.b + '%</span>' +
+      '<span class="prob-pct" style="color:#0055d4">' + prob.b + '%</span>' +
     '</div>' +
     '<div class="prob-bar-bg"><div class="prob-bar bar-b" id="barB" style="width:0%"></div></div>';
 
-  // 헤더
   var nameA = slotA.name.split(' ')[0];
   var nameB = slotB.name.split(' ')[0];
   document.getElementById('thA').textContent = nameA;
   document.getElementById('thB').textContent = nameB;
 
-  // 스탯 테이블
   var tbody = document.getElementById('statBody');
   tbody.innerHTML = '';
   var allA = Object.assign({}, slotA.stats || {}, slotA.extra || {});
@@ -514,7 +917,6 @@ function renderResult() {
   var result = document.getElementById('result');
   result.style.display = 'block';
 
-  // 바 애니메이션
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
       var bA = document.getElementById('barA');
@@ -527,7 +929,6 @@ function renderResult() {
   setTimeout(function() { result.scrollIntoView({behavior:'smooth'}); }, 120);
 }
 
-// 드래그앤드롭 — 이벤트 위임으로 innerHTML 교체 후에도 작동
 var vsContainer = document.getElementById('vsContainer');
 vsContainer.addEventListener('dragover', function(e) {
   var zone = e.target.closest('.drop-zone');
@@ -547,9 +948,7 @@ vsContainer.addEventListener('drop', function(e) {
   placeCard(cardId, slot);
 });
 
-window.onload = function() {
-  renderPool();
-};
+window.onload = function() { renderPool(); };
 </script>
 
 </body>
