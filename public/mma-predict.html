@@ -164,6 +164,9 @@ body {
   display:flex;
   align-items:stretch;
   gap:10px;
+  position:relative;
+  overflow:hidden;
+  border-radius:8px;
 }
 .drop-zone {
   flex:1;
@@ -377,14 +380,15 @@ body {
 .td-adv-b { color:#0055d4; font-family:'Bebas Neue',sans-serif; font-size:11px; }
 .td-adv-tie { color:#ccc; font-family:'Bebas Neue',sans-serif; font-size:11px; }
 
-/* ===== 애니메이션 오버레이 ===== */
+/* ===== 애니메이션 오버레이 (vs-container 내부) ===== */
 #animOverlay {
   display:none;
-  position:fixed;
+  position:absolute;
   inset:0;
-  z-index:9999;
+  z-index:10;
   pointer-events:none;
   overflow:hidden;
+  border-radius:8px;
 }
 
 /* --- FLASH --- */
@@ -410,11 +414,11 @@ body {
 }
 .anim-countdown-num {
   font-family:'Bebas Neue',sans-serif;
-  font-size:160px;
-  letter-spacing:8px;
+  font-size:80px;
+  letter-spacing:4px;
   line-height:1;
   color:#d4001a;
-  text-shadow:0 0 40px rgba(212,0,26,0.9);
+  text-shadow:0 0 20px rgba(212,0,26,0.9);
   animation:countPop 0.28s ease-out;
 }
 @keyframes countPop {
@@ -424,10 +428,10 @@ body {
 }
 .anim-fight-text {
   font-family:'Bebas Neue',sans-serif;
-  font-size:80px;
-  letter-spacing:12px;
+  font-size:44px;
+  letter-spacing:8px;
   color:#fff;
-  text-shadow:0 0 30px rgba(255,255,255,0.8);
+  text-shadow:0 0 20px rgba(255,255,255,0.8);
   animation:fightPop 0.3s ease-out;
 }
 @keyframes fightPop {
@@ -446,11 +450,13 @@ body {
 }
 .glitch-text {
   font-family:'Bebas Neue',sans-serif;
-  font-size:90px;
-  letter-spacing:12px;
+  font-size:36px;
+  letter-spacing:4px;
   color:#fff;
   position:relative;
   animation:glitchMain 0.9s steps(1) forwards;
+  text-align:center;
+  padding:0 8px;
 }
 .glitch-text::before, .glitch-text::after {
   content:attr(data-text);
@@ -533,21 +539,21 @@ body {
 }
 .clash-name {
   font-family:'Bebas Neue',sans-serif;
-  font-size:32px;
-  letter-spacing:4px;
+  font-size:18px;
+  letter-spacing:2px;
   color:#fff;
-  text-shadow:0 0 20px rgba(255,255,255,0.6);
-  padding:0 16px;
+  text-shadow:0 0 12px rgba(255,255,255,0.6);
+  padding:0 8px;
   text-align:center;
   word-break:break-word;
 }
 .clash-vs {
   position:absolute;
   font-family:'Bebas Neue',sans-serif;
-  font-size:60px;
+  font-size:36px;
   color:#fff;
   letter-spacing:4px;
-  text-shadow:0 0 30px rgba(255,255,255,0.9), 0 0 60px rgba(255,200,0,0.6);
+  text-shadow:0 0 20px rgba(255,255,255,0.9), 0 0 40px rgba(255,200,0,0.6);
   z-index:2;
   animation:clashVS 0.9s ease-out forwards;
 }
@@ -569,7 +575,7 @@ body {
   gap:8px;
 }
 .thunder-bolt {
-  font-size:100px;
+  font-size:56px;
   animation:thunderAnim 0.9s steps(1) forwards;
 }
 @keyframes thunderAnim {
@@ -585,10 +591,10 @@ body {
 }
 .thunder-label {
   font-family:'Bebas Neue',sans-serif;
-  font-size:28px;
-  letter-spacing:8px;
+  font-size:16px;
+  letter-spacing:6px;
   color:#ffe066;
-  text-shadow:0 0 20px rgba(255,224,102,0.9);
+  text-shadow:0 0 12px rgba(255,224,102,0.9);
   animation:thunderLabel 0.9s ease-out forwards;
 }
 @keyframes thunderLabel {
@@ -599,9 +605,6 @@ body {
 </style>
 </head>
 <body>
-
-<!-- 애니메이션 오버레이 -->
-<div id="animOverlay"></div>
 
 <div class="top-bar">
   <div class="top-bar-nav">
@@ -629,6 +632,8 @@ body {
 
 <div class="section-label">VS</div>
 <div class="vs-container" id="vsContainer">
+  <!-- 애니메이션 오버레이 (vs-container 내부) -->
+  <div id="animOverlay"></div>
   <div id="zoneA" class="drop-zone">
     <div class="zone-label">FIGHTER A</div>
     <div class="zone-placeholder">카드를 여기에<br>드래그하세요</div>
