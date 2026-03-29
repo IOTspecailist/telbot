@@ -695,11 +695,13 @@ function calcScore(card) {
 function calcProb(cardA, cardB) {
   var sA = calcScore(cardA);
   var sB = calcScore(cardB);
-  var pA = sA * sA;
-  var pB = sB * sB;
+  // 세제곱 사용: 가중치 차이를 더 극적으로 반영
+  var pA = sA * sA * sA;
+  var pB = sB * sB * sB;
   var total = pA + pB;
-  var a = Math.round(pA / total * 100);
-  return { a: a, b: 100 - a };
+  var a = Math.round(pA / total * 1000) / 10; // 소수점 1자리
+  var b = Math.round((1000 - a * 10)) / 10;
+  return { a: a, b: b };
 }
 
 function resetAll() {
