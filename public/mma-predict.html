@@ -274,73 +274,148 @@ body {
   align-items:center;
   text-shadow:0 0 12px rgba(212,0,26,0.3);
 }
-/* 결과 */
+/* ===== 결과 ===== */
 .result-section {
   width:100%;
   max-width:480px;
-  background:#fff;
-  border:1px solid rgba(212,0,26,0.2);
-  border-radius:6px;
+  background:#141414;
+  border-radius:8px;
   overflow:hidden;
-  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+  box-shadow:0 8px 40px rgba(0,0,0,0.45);
 }
 .result-header {
-  background:linear-gradient(90deg,#d4001a,#8a0010);
-  padding:10px 16px;
+  background:#0d0d0d;
+  padding:7px 14px;
   font-family:'Bebas Neue',sans-serif;
-  font-size:14px;
+  font-size:10px;
+  letter-spacing:5px;
+  color:#333;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+/* 우승자 배너 */
+.result-winner-zone {
+  padding:22px 16px 18px;
+  text-align:center;
+  background:linear-gradient(160deg,#0d0d0d 0%,#1a0004 100%);
+  position:relative;
+  overflow:hidden;
+}
+.result-winner-zone::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at center, rgba(212,0,26,0.14) 0%, transparent 68%);
+  pointer-events:none;
+}
+.result-winner-label {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;
+  letter-spacing:6px;
+  color:#d4001a;
+  margin-bottom:8px;
+  position:relative;
+}
+.result-winner-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:54px;
   letter-spacing:4px;
   color:#fff;
+  line-height:1;
+  position:relative;
+  word-break:break-word;
+  padding:0 8px;
+  animation:winnerReveal 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
 }
-.result-body {
-  padding:16px;
+@keyframes winnerReveal {
+  0%   { opacity:0; transform:scale(0.72) translateY(18px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+/* 확률 바 (우승자 배너 하단) */
+.prob-shared-bar {
+  height:5px;
+  display:flex;
+  width:100%;
+}
+.prob-shared-fill-a {
+  height:100%;
+  background:linear-gradient(90deg,#7a0010,#ff3344);
+  transition:width 1.1s cubic-bezier(.4,0,.2,1);
+  width:0%;
+}
+.prob-shared-fill-b {
+  height:100%;
+  flex:1;
+  background:linear-gradient(90deg,#003a99,#3377ff);
+}
+/* 확률 스플릿 */
+.result-prob-split {
+  display:flex;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.prob-side {
+  flex:1;
+  padding:16px 10px 12px;
   display:flex;
   flex-direction:column;
-  gap:16px;
+  align-items:center;
+  gap:4px;
 }
-.prob-row { display:flex; flex-direction:column; gap:6px; }
-.prob-fighter {
+.prob-side-a { background:rgba(212,0,26,0.07); border-right:1px solid rgba(255,255,255,0.04); }
+.prob-side-b { background:rgba(0,85,212,0.07); }
+.prob-big-pct {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:48px;
+  letter-spacing:1px;
+  line-height:1;
+}
+.prob-big-pct-a { color:#ff3344; }
+.prob-big-pct-b { color:#3377ff; }
+.prob-side-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;
+  letter-spacing:2px;
+  color:#444;
+  text-align:center;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.prob-side-winner-badge {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:9px;
+  letter-spacing:2px;
+  padding:2px 7px;
+  border-radius:2px;
+  margin-top:2px;
+}
+.prob-side-winner-badge-a { background:#d4001a; color:#fff; }
+.prob-side-winner-badge-b { background:#0055d4; color:#fff; }
+/* 스탯 토글 버튼 */
+.result-stats-toggle {
+  width:100%;
+  padding:9px 14px;
+  background:none;
+  border:none;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;
+  letter-spacing:3px;
+  color:#3a3a3a;
+  cursor:pointer;
+  text-align:left;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
-.prob-name {
-  font-family:'Bebas Neue',sans-serif;
-  font-size:18px;
-  letter-spacing:2px;
-  color:#1a1a1a;
-}
-.winner-tag {
-  display:inline-block;
-  font-family:'Bebas Neue',sans-serif;
-  font-size:10px;
-  letter-spacing:2px;
-  padding:2px 7px;
-  border-radius:2px;
-  margin-left:7px;
-  vertical-align:middle;
-}
-.winner-tag-a { background:#d4001a; color:#fff; }
-.winner-tag-b { background:#0055d4; color:#fff; }
-.prob-pct {
-  font-family:'Bebas Neue',sans-serif;
-  font-size:24px;
-  letter-spacing:1px;
-}
-.prob-bar-bg {
-  height:10px;
-  background:rgba(0,0,0,0.06);
-  border-radius:5px;
+.result-stats-toggle:hover { color:#666; background:rgba(255,255,255,0.02); }
+/* 스탯 영역 (접힘) */
+.result-stats-body {
   overflow:hidden;
+  max-height:0;
+  transition:max-height 0.38s ease;
+  background:#111;
 }
-.prob-bar {
-  height:100%;
-  border-radius:5px;
-  width:0%;
-  transition:width 0.9s cubic-bezier(.4,0,.2,1);
-}
-.bar-a { background:linear-gradient(90deg,#a00014,#ff3344); }
-.bar-b { background:linear-gradient(90deg,#003a99,#0077ff); }
+.result-stats-body.open { max-height:800px; }
 /* 스탯 비교 테이블 */
 .stat-table {
   width:100%;
@@ -348,37 +423,73 @@ body {
 }
 .stat-table th {
   font-family:'Bebas Neue',sans-serif;
-  font-size:11px;
+  font-size:10px;
   letter-spacing:2px;
-  color:#aaa;
-  padding:5px 8px;
-  border-bottom:1px solid rgba(0,0,0,0.07);
+  color:#2e2e2e;
+  padding:6px 8px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
   text-align:center;
+  background:#0d0d0d;
 }
 .stat-table th:first-child { text-align:left; }
 .stat-table td {
   padding:5px 8px;
-  border-bottom:1px solid rgba(0,0,0,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.03);
   text-align:center;
   font-weight:700;
   letter-spacing:1px;
   font-size:13px;
-  color:#1a1a1a;
+  color:#555;
 }
 .stat-table td:first-child {
   text-align:left;
-  color:#999;
+  color:#2e2e2e;
   font-size:11px;
   font-weight:700;
   letter-spacing:1px;
   text-transform:uppercase;
 }
-.td-win { color:#1a1a1a; font-family:'Bebas Neue',sans-serif; }
-.td-lose { color:#ccc; }
-.td-tie { color:#aaa; }
+.td-win { color:#ddd; font-family:'Bebas Neue',sans-serif; }
+.td-lose { color:#222; }
+.td-tie { color:#333; }
 .td-adv-a { color:#d4001a; font-family:'Bebas Neue',sans-serif; font-size:11px; }
 .td-adv-b { color:#0055d4; font-family:'Bebas Neue',sans-serif; font-size:11px; }
-.td-adv-tie { color:#ccc; font-family:'Bebas Neue',sans-serif; font-size:11px; }
+.td-adv-tie { color:#2a2a2a; font-family:'Bebas Neue',sans-serif; font-size:11px; }
+/* ===== 우측 사이드 네비게이션 ===== */
+.side-nav {
+  position:fixed;
+  right:0;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  background:rgba(18,18,18,0.96);
+  border-radius:6px 0 0 6px;
+  overflow:hidden;
+  z-index:200;
+  box-shadow:-3px 0 18px rgba(0,0,0,0.3);
+}
+.side-nav a {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:13px 8px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:8px;
+  letter-spacing:1.5px;
+  color:#444;
+  text-decoration:none;
+  gap:5px;
+  min-width:46px;
+  border-left:2px solid transparent;
+  transition:color 0.15s, background 0.15s;
+  line-height:1;
+}
+.side-nav a:hover { color:#bbb; background:rgba(255,255,255,0.04); }
+.side-nav a.active { color:#d4001a; border-left-color:#d4001a; background:rgba(212,0,26,0.07); }
+.side-nav-sep { height:1px; background:rgba(255,255,255,0.05); }
+.side-nav-icon { font-size:15px; line-height:1; }
 
 /* ===== 애니메이션 오버레이 (vs-container 내부) ===== */
 #animOverlay {
@@ -606,6 +717,14 @@ body {
 </head>
 <body>
 
+<nav class="side-nav">
+  <a href="/" title="Home"><span class="side-nav-icon">⌂</span>HOME</a>
+  <div class="side-nav-sep"></div>
+  <a href="/mma-stat.html"><span class="side-nav-icon">◈</span>STAT</a>
+  <a href="/mma-predict.html" class="active"><span class="side-nav-icon">⚔</span>PREDICT</a>
+  <a href="/mma-anim-demo.html"><span class="side-nav-icon">▶</span>DEMO</a>
+</nav>
+
 <div class="top-bar">
   <div class="top-bar-nav">
     <a href="/">⌂ HOME</a>
@@ -647,9 +766,16 @@ body {
 
 <div id="result" class="result-section" style="display:none">
   <div class="result-header">PREDICTION RESULT</div>
-  <div class="result-body">
-    <div class="prob-row" id="probRowA"></div>
-    <div class="prob-row" id="probRowB"></div>
+  <div class="result-winner-zone" id="resultWinnerZone"></div>
+  <div class="prob-shared-bar">
+    <div class="prob-shared-fill-a" id="sharedBarA"></div>
+    <div class="prob-shared-fill-b"></div>
+  </div>
+  <div class="result-prob-split" id="resultProbSplit"></div>
+  <button class="result-stats-toggle" onclick="toggleStats(this)">
+    STAT BREAKDOWN <span id="statsArrow">▼</span>
+  </button>
+  <div class="result-stats-body" id="resultStatsBody">
     <table class="stat-table">
       <thead>
         <tr>
@@ -874,27 +1000,32 @@ function playAnimation(effect, done) {
 function renderResult() {
   var prob = calcProb(slotA, slotB);
   var winSlot = prob.a >= prob.b ? 'A' : 'B';
+  var winner = winSlot === 'A' ? slotA : slotB;
+  var winGlow = winSlot === 'A'
+    ? '0 0 30px rgba(212,0,26,0.75),0 0 70px rgba(212,0,26,0.35)'
+    : '0 0 30px rgba(0,85,212,0.75),0 0 70px rgba(0,85,212,0.35)';
 
-  document.getElementById('probRowA').innerHTML =
-    '<div class="prob-fighter">' +
-      '<div>' +
-        '<span class="prob-name">' + slotA.name + '</span>' +
-        (winSlot === 'A' ? '<span class="winner-tag winner-tag-a">WINNER</span>' : '') +
-      '</div>' +
-      '<span class="prob-pct" style="color:#d4001a">' + prob.a + '%</span>' +
+  // 우승자 배너
+  document.getElementById('resultWinnerZone').innerHTML =
+    '<div class="result-winner-label">PREDICTED WINNER</div>' +
+    '<div class="result-winner-name" style="text-shadow:' + winGlow + '">' +
+      winner.name +
+    '</div>';
+
+  // 확률 스플릿
+  document.getElementById('resultProbSplit').innerHTML =
+    '<div class="prob-side prob-side-a">' +
+      '<div class="prob-big-pct prob-big-pct-a">' + prob.a + '%</div>' +
+      '<div class="prob-side-name">' + slotA.name + '</div>' +
+      (winSlot === 'A' ? '<div class="prob-side-winner-badge prob-side-winner-badge-a">WINNER</div>' : '') +
     '</div>' +
-    '<div class="prob-bar-bg"><div class="prob-bar bar-a" id="barA" style="width:0%"></div></div>';
+    '<div class="prob-side prob-side-b">' +
+      '<div class="prob-big-pct prob-big-pct-b">' + prob.b + '%</div>' +
+      '<div class="prob-side-name">' + slotB.name + '</div>' +
+      (winSlot === 'B' ? '<div class="prob-side-winner-badge prob-side-winner-badge-b">WINNER</div>' : '') +
+    '</div>';
 
-  document.getElementById('probRowB').innerHTML =
-    '<div class="prob-fighter">' +
-      '<div>' +
-        '<span class="prob-name">' + slotB.name + '</span>' +
-        (winSlot === 'B' ? '<span class="winner-tag winner-tag-b">WINNER</span>' : '') +
-      '</div>' +
-      '<span class="prob-pct" style="color:#0055d4">' + prob.b + '%</span>' +
-    '</div>' +
-    '<div class="prob-bar-bg"><div class="prob-bar bar-b" id="barB" style="width:0%"></div></div>';
-
+  // 스탯 테이블
   var nameA = slotA.name.split(' ')[0];
   var nameB = slotB.name.split(' ')[0];
   document.getElementById('thA').textContent = nameA;
@@ -921,19 +1052,27 @@ function renderResult() {
     tbody.appendChild(tr);
   });
 
+  // 스탯 접기 초기화
+  document.getElementById('resultStatsBody').classList.remove('open');
+  document.getElementById('statsArrow').textContent = '▼';
+
   var result = document.getElementById('result');
   result.style.display = 'block';
 
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
-      var bA = document.getElementById('barA');
-      var bB = document.getElementById('barB');
-      if (bA) bA.style.width = prob.a + '%';
-      if (bB) bB.style.width = prob.b + '%';
+      var bar = document.getElementById('sharedBarA');
+      if (bar) bar.style.width = prob.a + '%';
     });
   });
 
   setTimeout(function() { result.scrollIntoView({behavior:'smooth'}); }, 120);
+}
+
+function toggleStats(btn) {
+  var body = document.getElementById('resultStatsBody');
+  body.classList.toggle('open');
+  document.getElementById('statsArrow').textContent = body.classList.contains('open') ? '▲' : '▼';
 }
 
 var vsContainer = document.getElementById('vsContainer');
