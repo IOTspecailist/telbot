@@ -1156,7 +1156,7 @@ function drawRadarPoly(ctx, vals, cx, cy, maxR, fillStyle, strokeStyle) {
 function drawOctR(ctx, cx, cy, r, fill, stroke, lw) {
   ctx.beginPath();
   for (var i = 0; i < 8; i++) {
-    var a = (Math.PI/4)*i - Math.PI/8;
+    var a = (Math.PI/4)*i - Math.PI/2; // 꼭짓점을 레이더 축(-90°,−45°…)에 맞춤
     if (i===0) ctx.moveTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
     else ctx.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
   }
