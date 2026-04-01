@@ -479,46 +479,25 @@ body {
   transition:max-height 0.38s ease;
   background:#fafafa;
 }
-.result-stats-body.open { max-height:800px; }
-/* 스탯 비교 테이블 */
-.stat-table {
+.result-stats-body.open { max-height:420px; }
+/* 레이더 차트 캔버스 */
+#radarCanvas {
+  display:block;
+  margin:0 auto;
+  max-width:340px;
   width:100%;
-  border-collapse:collapse;
 }
-.stat-table th {
+.radar-legend {
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  padding:8px 0 10px;
   font-family:'Bebas Neue',sans-serif;
-  font-size:10px;
-  letter-spacing:2px;
-  color:#bbb;
-  padding:6px 8px;
-  border-bottom:1px solid rgba(0,0,0,0.06);
-  text-align:center;
-  background:#f7f3ec;
-}
-.stat-table th:first-child { text-align:left; }
-.stat-table td {
-  padding:5px 8px;
-  border-bottom:1px solid rgba(0,0,0,0.04);
-  text-align:center;
-  font-weight:700;
-  letter-spacing:1px;
-  font-size:13px;
-  color:#ccc;
-}
-.stat-table td:first-child {
-  text-align:left;
-  color:#ccc;
   font-size:11px;
-  font-weight:700;
-  letter-spacing:1px;
-  text-transform:uppercase;
+  letter-spacing:2px;
 }
-.td-win { color:#1a1a1a; font-family:'Bebas Neue',sans-serif; }
-.td-lose { color:#ddd; }
-.td-tie { color:#ccc; }
-.td-adv-a { color:#d4001a; font-family:'Bebas Neue',sans-serif; font-size:11px; }
-.td-adv-b { color:#0055d4; font-family:'Bebas Neue',sans-serif; font-size:11px; }
-.td-adv-tie { color:#ccc; font-family:'Bebas Neue',sans-serif; font-size:11px; }
+.radar-legend-a { color:#d4001a; }
+.radar-legend-b { color:#0055d4; }
 /* ===== 우측 사이드 네비게이션 ===== */
 .side-nav {
   position:fixed;
@@ -837,20 +816,14 @@ body {
   </div>
   <div class="result-prob-split" id="resultProbSplit"></div>
   <button class="result-stats-toggle" onclick="toggleStats(this)">
-    STAT BREAKDOWN <span id="statsArrow">▼</span>
+    STAT RADAR <span id="statsArrow">▼</span>
   </button>
   <div class="result-stats-body" id="resultStatsBody">
-    <table class="stat-table">
-      <thead>
-        <tr>
-          <th>STAT</th>
-          <th id="thA" style="color:#d4001a">A</th>
-          <th id="thB" style="color:#0055d4">B</th>
-          <th>우위</th>
-        </tr>
-      </thead>
-      <tbody id="statBody"></tbody>
-    </table>
+    <canvas id="radarCanvas" width="340" height="320"></canvas>
+    <div class="radar-legend">
+      <span class="radar-legend-a" id="radarLabelA">■ A</span>
+      <span class="radar-legend-b" id="radarLabelB">■ B</span>
+    </div>
   </div>
 </div>
 
@@ -1103,32 +1076,16 @@ function renderResult() {
         : '<div class="prob-side-defeat-badge">DEFEATED</div>') +
     '</div>';
 
-  // 스탯 테이블
+  // 레이더 차트 범례 이름
   var nameA = slotA.name.split(' ')[0];
   var nameB = slotB.name.split(' ')[0];
-  document.getElementById('thA').textContent = nameA;
-  document.getElementById('thB').textContent = nameB;
+  document.getElementById('radarLabelA').textContent = '■ ' + nameA;
+  document.getElementById('radarLabelB').textContent = '■ ' + nameB;
 
-  var tbody = document.getElementById('statBody');
-  tbody.innerHTML = '';
+  // 레이더 데이터 준비
   var allA = Object.assign({}, slotA.stats || {}, slotA.extra || {});
   var allB = Object.assign({}, slotB.stats || {}, slotB.extra || {});
-
-  Object.keys(STAT_LABELS).forEach(function(k) {
-    var vA = allA[k] || 0;
-    var vB = allB[k] || 0;
-    var advClass, advText;
-    if (vA > vB)      { advClass = 'td-adv-a'; advText = 'A +' + (vA - vB); }
-    else if (vB > vA) { advClass = 'td-adv-b'; advText = 'B +' + (vB - vA); }
-    else              { advClass = 'td-adv-tie'; advText = '—'; }
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td>' + STAT_LABELS[k] + '</td>' +
-      '<td class="' + (vA > vB ? 'td-win' : vA < vB ? 'td-lose' : 'td-tie') + '">' + vA + '</td>' +
-      '<td class="' + (vB > vA ? 'td-win' : vB < vA ? 'td-lose' : 'td-tie') + '">' + vB + '</td>' +
-      '<td class="' + advClass + '">' + advText + '</td>';
-    tbody.appendChild(tr);
-  });
+  drawRadar(allA, allB);
 
   // 스탯 접기 초기화
   document.getElementById('resultStatsBody').classList.remove('open');
@@ -1151,6 +1108,109 @@ function toggleStats(btn) {
   var body = document.getElementById('resultStatsBody');
   body.classList.toggle('open');
   document.getElementById('statsArrow').textContent = body.classList.contains('open') ? '▲' : '▼';
+  // 열릴 때 캔버스 재드로우 (슬롯이 있을 때만)
+  if (body.classList.contains('open') && slotA && slotB) {
+    setTimeout(function() {
+      var allA = Object.assign({}, slotA.stats || {}, slotA.extra || {});
+      var allB = Object.assign({}, slotB.stats || {}, slotB.extra || {});
+      drawRadar(allA, allB);
+    }, 50);
+  }
+}
+
+// ── 레이더 차트 ──
+var RADAR_KEYS = ['fightiq','power','striking','chin','wrestling','speed','cardio','jiujitsu'];
+var RADAR_LABELS = ['FIGHT IQ','POWER','STRIKING','CHIN','WRESTLING','SPEED','CARDIO','JIU-JITSU'];
+var RADAR_ANGLES = [0,1,2,3,4,5,6,7].map(function(i){ return -90 + 45*i; });
+
+function radarToRad(deg) { return deg * Math.PI / 180; }
+function radarCurve(val) {
+  var dev = val - 5.5;
+  var eff = 5.5 + dev * Math.abs(dev) / 4.5;
+  return Math.max(0, (eff - 1) / 9);
+}
+
+function drawRadarPoly(ctx, vals, cx, cy, maxR, fillStyle, strokeStyle) {
+  var pts = RADAR_KEYS.map(function(k, i) {
+    var r = radarToRad(RADAR_ANGLES[i]);
+    var rv = radarCurve(vals[k] || 0);
+    return { x: cx + Math.cos(r)*rv*maxR, y: cy + Math.sin(r)*rv*maxR };
+  });
+  ctx.beginPath();
+  pts.forEach(function(p,i){ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+  ctx.closePath();
+  ctx.fillStyle = fillStyle;
+  ctx.fill();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // 꼭짓점 점
+  pts.forEach(function(p) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+    ctx.fillStyle = strokeStyle;
+    ctx.fill();
+  });
+}
+
+function drawOctR(ctx, cx, cy, r, fill, stroke, lw) {
+  ctx.beginPath();
+  for (var i = 0; i < 8; i++) {
+    var a = (Math.PI/4)*i - Math.PI/8;
+    if (i===0) ctx.moveTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+    else ctx.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+  }
+  ctx.closePath();
+  if (fill) { ctx.fillStyle=fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.stroke(); }
+}
+
+function drawRadar(allA, allB) {
+  var canvas = document.getElementById('radarCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // 배경
+  ctx.fillStyle = '#fafafa';
+  ctx.fillRect(0,0,W,H);
+
+  var cx = W/2, cy = H/2 - 6, maxR = Math.min(W,H)*0.34;
+  var labelR = maxR + 26;
+
+  // 가이드 링
+  for (var ring = 1; ring <= 5; ring++) {
+    drawOctR(ctx, cx, cy, maxR/5*ring, null, 'rgba(0,0,0,0.07)', 0.5);
+  }
+  // 외곽선
+  drawOctR(ctx, cx, cy, maxR, null, 'rgba(0,0,0,0.15)', 1);
+
+  // 축 라인
+  RADAR_ANGLES.forEach(function(deg) {
+    var rad = radarToRad(deg);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(rad)*maxR, cy + Math.sin(rad)*maxR);
+    ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // B (파랑) 먼저 그리고 A (빨강) 위에
+  drawRadarPoly(ctx, allB, cx, cy, maxR, 'rgba(0,85,212,0.22)', '#0055d4');
+  drawRadarPoly(ctx, allA, cx, cy, maxR, 'rgba(212,0,26,0.22)', '#d4001a');
+
+  // 라벨
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  RADAR_LABELS.forEach(function(label, i) {
+    var rad = radarToRad(RADAR_ANGLES[i]);
+    var lx = cx + Math.cos(rad)*labelR;
+    var ly = cy + Math.sin(rad)*labelR;
+    ctx.font = '700 9px "Barlow Condensed", sans-serif';
+    ctx.fillStyle = '#888';
+    ctx.fillText(label, lx, ly);
+  });
 }
 
 var vsContainer = document.getElementById('vsContainer');
