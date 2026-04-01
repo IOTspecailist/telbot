@@ -343,6 +343,18 @@ p { font-size:13px; color:#888; letter-spacing:1px; font-weight:700; margin-bott
 <p>버튼을 눌러서 각 효과를 미리보기하세요</p>
 
 <div class="btn-list">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
+    <select id="demoSelect" style="flex:1;background:#fff;border:1px solid rgba(212,0,26,0.3);border-radius:3px;color:#1a1a1a;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:8px;cursor:pointer;outline:none;">
+      <option value="1">① VS 충돌</option>
+      <option value="2">② 카운트다운</option>
+      <option value="3">③ 로딩 바</option>
+      <option value="4">④ 플래시</option>
+      <option value="5">⑤ 스캔 라인</option>
+      <option value="6">⑥ 숫자 롤링</option>
+      <option value="7">⑦ 카드 플립</option>
+    </select>
+    <button class="demo-btn" style="width:auto;padding:14px 22px;white-space:nowrap;" onclick="playSelected()">▶ PLAY</button>
+  </div>
   <button class="demo-btn" onclick="play1()">① VS 충돌 효과</button>
   <button class="demo-btn" onclick="play2()">② 카운트다운  3·2·1·FIGHT</button>
   <button class="demo-btn" onclick="play3()">③ 로딩 바  ANALYZING...</button>
@@ -419,6 +431,12 @@ p { font-size:13px; color:#888; letter-spacing:1px; font-weight:700; margin-bott
 </div>
 
 <script>
+function playSelected() {
+  var val = document.getElementById('demoSelect').value;
+  var fns = {'1':play1,'2':play2,'3':play3,'4':play4,'5':play5,'6':play6,'7':play7};
+  if (fns[val]) fns[val]();
+}
+
 function hideAll() {
   document.querySelectorAll('.overlay').forEach(function(o) { o.classList.remove('show'); });
 }

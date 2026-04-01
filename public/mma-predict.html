@@ -560,6 +560,41 @@ body {
   .mob-nav-dropdown.open { display:block; }
 }
 
+/* ===== 전체화면 스캔라인 오버레이 ===== */
+#fullScanOverlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,0.88);
+  overflow:hidden;
+  align-items:center;
+  justify-content:center;
+}
+#fullScanOverlay.show { display:flex; }
+.fscan-grid {
+  position:absolute;
+  inset:0;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 1px,transparent 1px,transparent 12px);
+}
+.fscan-label {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;
+  letter-spacing:5px;
+  color:#d4001a;
+  position:absolute;
+  top:40%;
+  text-align:center;
+}
+.fscan-line {
+  position:absolute;
+  left:0; right:0;
+  height:3px;
+  background:linear-gradient(90deg,transparent,#d4001a,#ff3344,#d4001a,transparent);
+  box-shadow:0 0 16px rgba(212,0,26,0.9);
+  top:-3px;
+}
+
 /* ===== 애니메이션 오버레이 (vs-container 내부) ===== */
 #animOverlay {
   display:none;
@@ -824,14 +859,6 @@ body {
 <div id="cardPool" class="card-pool"></div>
 
 <div class="anim-bar">
-  <label>EFFECT</label>
-  <select id="animSelect" class="anim-select">
-    <option value="clash">⚡ CLASH — 카드 충돌</option>
-    <option value="countdown">🔢 COUNTDOWN — 3·2·1·FIGHT</option>
-    <option value="flash">💥 FLASH — 빨강·파랑 번쩍</option>
-    <option value="glitch">👾 GLITCH — 텍스트 글리치</option>
-    <option value="thunder">🌩 THUNDER — 번개</option>
-  </select>
   <button class="btn-reset" onclick="resetAll()">RESET</button>
 </div>
 
@@ -865,6 +892,13 @@ body {
 </div>
 <div class="hint" id="resultHint" style="display:none;width:100%;max-width:420px;padding:10px;text-align:center;font-size:13px;color:#d4001a;background:rgba(212,0,26,0.06);border:1px solid rgba(212,0,26,0.25);border-radius:4px;font-weight:700;letter-spacing:1px;">아래 이미지를 길게 눌러서 저장하세요</div>
 <img id="resultOutImg" alt="Prediction Result" style="display:none;width:100%;max-width:420px;border-radius:4px;">
+
+<!-- 전체화면 스캔라인 오버레이 -->
+<div id="fullScanOverlay">
+  <div class="fscan-grid"></div>
+  <div class="fscan-label">CALCULATING WIN PROBABILITY...</div>
+  <div class="fscan-line"></div>
+</div>
 
 <script>
 var slotA = null, slotB = null;
@@ -950,8 +984,7 @@ function placeCard(cardId, slot) {
   else slotB = card;
   renderZone(slot);
   if (slotA && slotB) {
-    var effect = document.getElementById('animSelect').value;
-    playAnimation(effect, function() { renderResult(); });
+    playClashThenScan(function() { renderResult(); });
   } else {
     document.getElementById('result').style.display = 'none';
   }
@@ -988,6 +1021,29 @@ function clearSlot(slot) {
   else slotB = null;
   renderZone(slot);
   document.getElementById('result').style.display = 'none';
+}
+
+/* ===== 기본 시퀀스: 카드 충돌 → 전체화면 스캔라인 ===== */
+function playClashThenScan(done) {
+  playAnimation('clash', function() {
+    playFullScanline(done);
+  });
+}
+
+function playFullScanline(done) {
+  var ov = document.getElementById('fullScanOverlay');
+  var line = ov.querySelector('.fscan-line');
+  line.style.transition = 'none';
+  line.style.top = '-3px';
+  ov.classList.add('show');
+  setTimeout(function() {
+    line.style.transition = 'top 2.2s linear';
+    line.style.top = 'calc(100% + 3px)';
+  }, 50);
+  setTimeout(function() {
+    ov.classList.remove('show');
+    done();
+  }, 2500);
 }
 
 /* ===== 애니메이션 ===== */
