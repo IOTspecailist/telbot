@@ -294,6 +294,7 @@ var grid = document.getElementById('statGrid');
 STATS.forEach(function(s) {
   var d = document.createElement('div');
   d.className = 'stat-item';
+  d.dataset.key = s.key;
   d.innerHTML =
     '<div class="stat-top">' +
       '<span>' + s.label + '</span>' +
@@ -313,6 +314,7 @@ var extraGrid = document.getElementById('extraGrid');
 EXTRA.forEach(function(s) {
   var d = document.createElement('div');
   d.className = 'stat-item';
+  d.dataset.key = s.key;
   d.innerHTML =
     '<div class="stat-top">' +
       '<span>' + s.label + '</span>' +
@@ -365,6 +367,31 @@ document.getElementById('createBtn').addEventListener('click', function() {
   }, 1600);
 });
 
+function loadCard(card) {
+  document.getElementById('nameInput').value = card.name || '';
+  document.getElementById('yearInput').value = card.year || '';
+  STATS.forEach(function(s) {
+    var v = (card.stats || {})[s.key];
+    if (v !== undefined) {
+      s.val = v;
+      document.getElementById('n_' + s.key).textContent = v;
+      var input = document.querySelector('#statGrid [data-key="' + s.key + '"] input');
+      if (input) input.value = v;
+    }
+  });
+  EXTRA.forEach(function(s) {
+    var v = (card.extra || {})[s.key];
+    if (v !== undefined) {
+      s.val = v;
+      document.getElementById('n_' + s.key).textContent = v;
+      var input = document.querySelector('#extraGrid [data-key="' + s.key + '"] input');
+      if (input) input.value = v;
+    }
+  });
+  redraw();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function renderSavedCards() {
   var cards = JSON.parse(localStorage.getItem('mma_cards') || '[]');
   var list = document.getElementById('cardList');
@@ -382,6 +409,9 @@ function renderSavedCards() {
       '<img src="' + card.image + '" alt="' + card.name + '">' +
       '<div class="card-name">' + card.name + (card.year ? ' ' + card.year : '') + '</div>' +
       '<button class="card-del" title="삭제">✕</button>';
+    item.addEventListener('click', function() {
+      loadCard(card);
+    });
     item.addEventListener('dragstart', function(e) {
       e.dataTransfer.setData('cardId', card.id);
     });
