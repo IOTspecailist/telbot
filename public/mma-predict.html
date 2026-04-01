@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MMA Winner Prediction</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -812,7 +813,7 @@ body {
   </div>
   <div class="result-prob-split" id="resultProbSplit"></div>
   <div class="result-stats-body" id="resultStatsBody">
-    <canvas id="radarCanvas" width="340" height="540"></canvas>
+    <canvas id="radarCanvas" width="340" height="320"></canvas>
   </div>
   <button class="result-save-btn" onclick="saveResultImage()">IMAGE SAVE ↓</button>
 </div>
@@ -1140,151 +1141,27 @@ function drawRadar(allA, allB, nameA, nameB, prob, winSlot) {
   var W = canvas.width, H = canvas.height;
   ctx.clearRect(0,0,W,H);
 
-  // ── 전체 배경 ──
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = '#fafafa';
   ctx.fillRect(0,0,W,H);
 
-  var y = 0;
-
-  // ── [1] WINNER 배너 ──
-  var winColor = winSlot === 'A' ? '#d4001a' : '#0055d4';
-  var winName = winSlot === 'A' ? nameA : nameB;
-  var loseName = winSlot === 'A' ? nameB : nameA;
-
-  var bannerH = 110;
-  var bannerGrad = ctx.createLinearGradient(0, y, 0, y + bannerH);
-  if (winSlot === 'A') {
-    bannerGrad.addColorStop(0, 'rgba(212,0,26,0.08)');
-    bannerGrad.addColorStop(1, '#ffffff');
-  } else {
-    bannerGrad.addColorStop(0, 'rgba(0,85,212,0.08)');
-    bannerGrad.addColorStop(1, '#ffffff');
-  }
-  ctx.fillStyle = bannerGrad;
-  ctx.fillRect(0, y, W, bannerH);
-  // 상단 컬러 바
-  ctx.fillStyle = winColor;
-  ctx.fillRect(0, y, W, 5);
-
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center';
-
-  // PREDICTED WINNER 레이블
-  ctx.font = '700 10px "Barlow Condensed", sans-serif';
-  ctx.fillStyle = winColor;
-  ctx.globalAlpha = 0.7;
-  ctx.fillText('PREDICTED WINNER', W/2, y + 22);
-  ctx.globalAlpha = 1;
-
-  // 승자 이름 (큰 글씨)
-  ctx.font = 'bold 48px "Bebas Neue", sans-serif';
-  ctx.fillStyle = winColor;
-  ctx.fillText(winName.toUpperCase(), W/2, y + 65);
-
-  // def. 패자
-  ctx.font = '700 11px "Barlow Condensed", sans-serif';
-  ctx.fillStyle = '#bbb';
-  ctx.fillText('def.  ' + loseName.toUpperCase(), W/2, y + 98);
-
-  y += bannerH;
-
-  // ── [2] 확률 바 ──
-  var barH = 28;
-  var aW = Math.round(W * prob.a / 100);
-  // A (빨강)
-  var gA = ctx.createLinearGradient(0, y, aW, y);
-  gA.addColorStop(0, '#a00014'); gA.addColorStop(1, '#d4001a');
-  ctx.fillStyle = gA;
-  ctx.fillRect(0, y, aW, barH);
-  // B (파랑)
-  var gB = ctx.createLinearGradient(aW, y, W, y);
-  gB.addColorStop(0, '#0044bb'); gB.addColorStop(1, '#0055d4');
-  ctx.fillStyle = gB;
-  ctx.fillRect(aW, y, W - aW, barH);
-  // 바 라벨
-  ctx.font = 'bold 12px "Bebas Neue", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(nameA + '  ' + prob.a + '%', 10, y + barH/2);
-  ctx.textAlign = 'right';
-  ctx.fillText(prob.b + '%  ' + nameB, W - 10, y + barH/2);
-  y += barH;
-
-  // ── [3] 확률 수치 스플릿 ──
-  var splitH = 74;
-  ctx.fillStyle = '#fafafa';
-  ctx.fillRect(0, y, W, splitH);
-
-  // A 쪽
-  var aLoser = winSlot !== 'A';
-  ctx.font = 'bold 34px "Bebas Neue", sans-serif';
-  ctx.fillStyle = aLoser ? '#ccc' : '#d4001a';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(prob.a + '%', 20, y + 28);
-  ctx.font = '700 11px "Barlow Condensed", sans-serif';
-  ctx.fillStyle = aLoser ? '#ccc' : '#1a1a1a';
-  ctx.fillText(nameA.toUpperCase(), 20, y + 52);
-  // badge
-  ctx.font = 'bold 9px "Bebas Neue", sans-serif';
-  if (!aLoser) {
-    ctx.fillStyle = '#d4001a';
-    ctx.fillText('WINNER', 20, y + 66);
-  } else {
-    ctx.fillStyle = '#ddd';
-    ctx.fillText('DEFEATED', 20, y + 66);
-  }
-
-  // B 쪽
-  var bLoser = winSlot !== 'B';
-  ctx.font = 'bold 34px "Bebas Neue", sans-serif';
-  ctx.fillStyle = bLoser ? '#ccc' : '#0055d4';
-  ctx.textAlign = 'right';
-  ctx.fillText(prob.b + '%', W - 20, y + 28);
-  ctx.font = '700 11px "Barlow Condensed", sans-serif';
-  ctx.fillStyle = bLoser ? '#ccc' : '#1a1a1a';
-  ctx.fillText(nameB.toUpperCase(), W - 20, y + 52);
-  ctx.font = 'bold 9px "Bebas Neue", sans-serif';
-  if (!bLoser) {
-    ctx.fillStyle = '#0055d4';
-    ctx.fillText('WINNER', W - 20, y + 66);
-  } else {
-    ctx.fillStyle = '#ddd';
-    ctx.fillText('DEFEATED', W - 20, y + 66);
-  }
-
-  // VS 가운데
-  ctx.font = 'bold 16px "Bebas Neue", sans-serif';
-  ctx.fillStyle = '#ddd';
-  ctx.textAlign = 'center';
-  ctx.fillText('VS', W/2, y + splitH/2);
-
-  y += splitH;
-
-  // 구분선
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-  y += 8;
-
-  // ── [4] 레이더 차트 ──
-  var chartH = H - y - 28;
-  var cx = W/2, cy = y + chartH/2, maxR = Math.min(W, chartH) * 0.35;
+  var cx = W/2, cy = H/2 - 6, maxR = Math.min(W,H)*0.34;
   var labelR = maxR + 26;
 
   for (var ring = 1; ring <= 5; ring++) {
-    drawOctR(ctx, cx, cy, maxR/5*ring, null, 'rgba(0,0,0,0.06)', 0.5);
+    drawOctR(ctx, cx, cy, maxR/5*ring, null, 'rgba(0,0,0,0.07)', 0.5);
   }
-  drawOctR(ctx, cx, cy, maxR, null, 'rgba(0,0,0,0.13)', 1);
+  drawOctR(ctx, cx, cy, maxR, null, 'rgba(0,0,0,0.15)', 1);
+
   RADAR_ANGLES.forEach(function(deg) {
     var rad = radarToRad(deg);
     ctx.beginPath(); ctx.moveTo(cx, cy);
     ctx.lineTo(cx + Math.cos(rad)*maxR, cy + Math.sin(rad)*maxR);
-    ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.07)'; ctx.lineWidth = 1; ctx.stroke();
   });
+
   drawRadarPoly(ctx, allB, cx, cy, maxR, 'rgba(0,85,212,0.22)', '#0055d4');
   drawRadarPoly(ctx, allA, cx, cy, maxR, 'rgba(212,0,26,0.22)', '#d4001a');
+
   ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
   RADAR_LABELS.forEach(function(label, i) {
     var rad = radarToRad(RADAR_ANGLES[i]);
@@ -1293,26 +1170,27 @@ function drawRadar(allA, allB, nameA, nameB, prob, winSlot) {
     ctx.fillText(label, cx + Math.cos(rad)*labelR, cy + Math.sin(rad)*labelR);
   });
 
-  // ── [5] 범례 ──
-  var legendY = H - 14;
+  // 범례
   ctx.font = '700 10px "Barlow Condensed", sans-serif';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#d4001a'; ctx.textAlign = 'center';
-  ctx.fillText('■ ' + nameA, W/2 - 54, legendY);
-  ctx.fillStyle = '#ccc'; ctx.fillText('·', W/2, legendY);
-  ctx.fillStyle = '#0055d4';
-  ctx.fillText('■ ' + nameB, W/2 + 54, legendY);
+  ctx.fillStyle = '#d4001a'; ctx.fillText('■ ' + nameA, W/2 - 54, H - 12);
+  ctx.fillStyle = '#ccc';    ctx.fillText('·', W/2, H - 12);
+  ctx.fillStyle = '#0055d4'; ctx.fillText('■ ' + nameB, W/2 + 54, H - 12);
 }
 
 function saveResultImage() {
-  var canvas = document.getElementById('radarCanvas');
-  var dataURL = canvas.toDataURL('image/png');
-  var img = document.getElementById('resultOutImg');
-  var hint = document.getElementById('resultHint');
-  img.src = dataURL;
-  img.style.display = 'block';
-  hint.style.display = 'block';
-  setTimeout(function() { img.scrollIntoView({behavior:'smooth'}); }, 200);
+  var target = document.getElementById('result');
+  var saveBtn = target.querySelector('.result-save-btn');
+  if (saveBtn) saveBtn.style.display = 'none';
+  html2canvas(target, { backgroundColor: '#ffffff', scale: 2, useCORS: true }).then(function(canvas) {
+    if (saveBtn) saveBtn.style.display = '';
+    var dataURL = canvas.toDataURL('image/png');
+    var img = document.getElementById('resultOutImg');
+    var hint = document.getElementById('resultHint');
+    img.src = dataURL;
+    img.style.display = 'block';
+    hint.style.display = 'block';
+    setTimeout(function() { img.scrollIntoView({behavior:'smooth'}); }, 200);
+  });
 }
 
 var vsContainer = document.getElementById('vsContainer');
