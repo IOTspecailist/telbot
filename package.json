@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
     "korean-lunar-calendar": "^0.3.6",
     "next": "^15.0.0",
     "react": "^19.0.0",

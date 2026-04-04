@@ -229,6 +229,51 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
   .mob-nav-btn { display:flex; }
   .mob-nav-dropdown.open { display:block; }
 }
+.btn-search {
+  padding:8px 16px;
+  background:#d4001a;
+  border:none;
+  border-radius:3px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:14px;
+  letter-spacing:2px;
+  color:#fff;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.btn-search:hover { background:#b8001a; }
+.btn-search:disabled { background:#888; cursor:not-allowed; }
+.search-status {
+  font-size:12px;
+  color:#888;
+  font-weight:700;
+  letter-spacing:1px;
+  padding:4px 0;
+}
+.search-status.error { color:#d4001a; }
+select {
+  width:100%;
+  background:#fafafa;
+  border:1px solid rgba(0,0,0,0.13);
+  border-radius:3px;
+  color:#1a1a1a;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;
+  letter-spacing:1px;
+  padding:8px 12px;
+  outline:none;
+  cursor:pointer;
+}
+select:focus { border-color:#d4001a; }
+.stat-readonly {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:4px 0;
+  border-bottom:1px solid rgba(0,0,0,0.05);
+}
+.stat-readonly span:first-child { font-size:11px;color:#999;text-transform:uppercase;letter-spacing:1px;font-weight:700; }
+.stat-readonly .num { font-family:'Bebas Neue',sans-serif;font-size:18px;color:#d4001a; }
 </style>
 </head>
 <body>
@@ -264,15 +309,32 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
 </div>
 
 <div class="panel">
-  <h2>FIGHTER NAME / YEAR</h2>
+  <h2>FIGHTER SEARCH</h2>
   <div style="display:flex;gap:10px;align-items:center;">
-    <input type="text" id="nameInput" value="JON JONES" placeholder="FIGHTER NAME" style="flex:1;">
-    <input type="text" id="yearInput" value="2025" placeholder="YEAR" style="width:90px;color:#ffd700;text-align:center;">
+    <input type="text" id="nameInput" placeholder="FIGHTER NAME (e.g. Islam Makhachev)" style="flex:1;">
+    <button class="btn-search" id="searchBtn">검색</button>
   </div>
+  <div class="search-status" id="searchStatus" style="display:none;"></div>
+</div>
+
+<div class="panel" id="confirmPanel" style="display:none;">
+  <h2>WEIGHT CLASS / YEAR</h2>
+  <select id="weightClassSelect">
+    <option value="Strawweight">Strawweight (115)</option>
+    <option value="Flyweight">Flyweight (125)</option>
+    <option value="Bantamweight">Bantamweight (135)</option>
+    <option value="Featherweight">Featherweight (145)</option>
+    <option value="Lightweight" selected>Lightweight (155)</option>
+    <option value="Welterweight">Welterweight (170)</option>
+    <option value="Middleweight">Middleweight (185)</option>
+    <option value="Light Heavyweight">Light Heavyweight (205)</option>
+    <option value="Heavyweight">Heavyweight (265)</option>
+  </select>
+  <input type="text" id="yearInput" value="2025" placeholder="YEAR" style="width:100%;color:#ffd700;text-align:center;margin-top:4px;">
 </div>
 
 <div class="panel">
-  <h2>STATS — RADAR (1-10)</h2>
+  <h2>STATS — RADAR (AUTO)</h2>
   <div class="grid" id="statGrid"></div>
 </div>
 
@@ -300,20 +362,23 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
 
 <script>
 var STATS = [
-  {key:'fightiq',   label:'Fight IQ',  val:7},
-  {key:'power',     label:'Power',     val:7},
-  {key:'striking',  label:'Striking',  val:8},
-  {key:'chin',      label:'Chin',      val:6},
-  {key:'wrestling', label:'Wrestling', val:7},
-  {key:'speed',     label:'Speed',     val:8},
-  {key:'cardio',    label:'Cardio',    val:9},
-  {key:'jiujitsu',  label:'Jiu-Jitsu', val:8}
+  {key:'fightiq',   label:'Fight IQ',  val:5},
+  {key:'power',     label:'Power',     val:5},
+  {key:'striking',  label:'Striking',  val:5},
+  {key:'chin',      label:'Chin',      val:5},
+  {key:'wrestling', label:'Wrestling', val:5},
+  {key:'speed',     label:'Speed',     val:5},
+  {key:'cardio',    label:'Cardio',    val:5},
+  {key:'jiujitsu',  label:'Jiu-Jitsu', val:5}
 ];
 
 var EXTRA = [
   {key:'micwork',   label:'Mic Work',  val:7},
   {key:'aura',      label:'Aura',      val:8}
 ];
+
+var _currentRawStats = null;
+var _currentScores = null;
 
 // 8개 스탯 — 시계방향 45° 간격, 12시(-90°)부터
 var ANGLES = [0,1,2,3,4,5,6,7].map(function(i){ return -90 + 45*i; });
@@ -336,7 +401,7 @@ function getTotal() {
   return sum;
 }
 
-// Build radar sliders
+// Build radar stat display (readonly — values set by API)
 var grid = document.getElementById('statGrid');
 STATS.forEach(function(s) {
   var d = document.createElement('div');
@@ -346,14 +411,8 @@ STATS.forEach(function(s) {
     '<div class="stat-top">' +
       '<span>' + s.label + '</span>' +
       '<span class="num" id="n_' + s.key + '">' + s.val + '</span>' +
-    '</div>' +
-    '<input type="range" min="1" max="10" value="' + s.val + '">';
+    '</div>';
   grid.appendChild(d);
-  d.querySelector('input').addEventListener('input', function(e) {
-    s.val = parseInt(e.target.value);
-    document.getElementById('n_' + s.key).textContent = s.val;
-    redraw();
-  });
 });
 
 // Build extra sliders
@@ -379,9 +438,71 @@ EXTRA.forEach(function(s) {
 document.getElementById('nameInput').addEventListener('input', redraw);
 document.getElementById('yearInput').addEventListener('input', redraw);
 
+// ── 검색 ──
+document.getElementById('searchBtn').addEventListener('click', function() {
+  var name = document.getElementById('nameInput').value.trim();
+  if (!name) return;
+
+  var btn = document.getElementById('searchBtn');
+  var status = document.getElementById('searchStatus');
+  btn.disabled = true;
+  btn.textContent = '검색 중...';
+  status.style.display = 'block';
+  status.className = 'search-status';
+  status.textContent = 'UFC 데이터 불러오는 중...';
+
+  fetch('/api/fighter?name=' + encodeURIComponent(name))
+    .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+      if (!res.ok) {
+        status.className = 'search-status error';
+        status.textContent = res.data.error || '선수를 찾을 수 없습니다';
+        return;
+      }
+      var d = res.data;
+      _currentRawStats = d.raw;
+      _currentScores = d.scores;
+
+      // 스탯 반영
+      var keyMap = {fightiq:'fightiq', power:'power', striking:'striking', chin:'chin',
+                    wrestling:'wrestling', speed:'speed', cardio:'cardio', jiujitsu:'jiujitsu'};
+      STATS.forEach(function(s) {
+        var v = d.scores[keyMap[s.key]];
+        if (v !== undefined) {
+          s.val = v;
+          document.getElementById('n_' + s.key).textContent = v;
+        }
+      });
+
+      // 체급 드롭다운 기본값
+      var sel = document.getElementById('weightClassSelect');
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === d.weightClass) { sel.selectedIndex = i; break; }
+      }
+
+      document.getElementById('confirmPanel').style.display = 'block';
+      status.className = 'search-status';
+      status.textContent = '✓ 데이터 로드 완료 — 체급 확인 후 카드 생성';
+      redraw();
+    })
+    .catch(function() {
+      status.className = 'search-status error';
+      status.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = '검색';
+    });
+});
+
+// ── 카드 생성 ──
 document.getElementById('createBtn').addEventListener('click', function() {
+  if (!_currentRawStats || !_currentScores) {
+    alert('먼저 선수를 검색해주세요.');
+    return;
+  }
+
   var canvas = document.getElementById('canvas');
-  // 썸네일 생성 (용량 절약)
   var thumb = document.createElement('canvas');
   thumb.width = 88;
   thumb.height = Math.round(88 * canvas.height / canvas.width);
@@ -389,50 +510,53 @@ document.getElementById('createBtn').addEventListener('click', function() {
 
   var card = {
     id: Date.now().toString(),
-    name: document.getElementById('nameInput').value || 'FIGHTER',
-    year: document.getElementById('yearInput').value || '',
-    stats: {},
-    extra: {},
+    name: document.getElementById('nameInput').value.trim() || 'FIGHTER',
+    weight_class: document.getElementById('weightClassSelect').value,
+    raw_stats: _currentRawStats,
+    scores: _currentScores,
     image: thumb.toDataURL('image/jpeg', 0.82)
   };
-  STATS.forEach(function(s) { card.stats[s.key] = s.val; });
-  EXTRA.forEach(function(s) { card.extra[s.key] = s.val; });
-
-  var cards = JSON.parse(localStorage.getItem('mma_cards') || '[]');
-  // 같은 이름+연도면 덮어쓰기
-  cards = cards.filter(function(c) { return !(c.name === card.name && c.year === card.year); });
-  cards.push(card);
-  localStorage.setItem('mma_cards', JSON.stringify(cards));
-  renderSavedCards();
 
   var btn = document.getElementById('createBtn');
-  btn.textContent = '저장 완료 ✓';
-  btn.style.background = '#1a6b1a';
-  setTimeout(function() {
-    btn.textContent = '카드 생성';
-    btn.style.background = '#d4001a';
-  }, 1600);
+  btn.disabled = true;
+  btn.textContent = '저장 중...';
+
+  fetch('/api/cards', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(card)
+  })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      btn.textContent = '저장 완료 ✓';
+      btn.style.background = '#1a6b1a';
+      renderSavedCards();
+      setTimeout(function() {
+        btn.textContent = '카드 생성';
+        btn.style.background = '#d4001a';
+        btn.disabled = false;
+      }, 1600);
+    })
+    .catch(function() {
+      alert('저장 중 오류가 발생했습니다.');
+      btn.textContent = '카드 생성';
+      btn.disabled = false;
+    });
 });
 
 function loadCard(card) {
   document.getElementById('nameInput').value = card.name || '';
-  document.getElementById('yearInput').value = card.year || '';
+  var scores = {
+    fightiq: card.score_fightiq, power: card.score_power,
+    striking: card.score_striking, chin: card.score_chin,
+    wrestling: card.score_wrestling, speed: card.score_speed,
+    cardio: card.score_cardio, jiujitsu: card.score_jiujitsu
+  };
   STATS.forEach(function(s) {
-    var v = (card.stats || {})[s.key];
+    var v = scores[s.key];
     if (v !== undefined) {
       s.val = v;
       document.getElementById('n_' + s.key).textContent = v;
-      var input = document.querySelector('#statGrid [data-key="' + s.key + '"] input');
-      if (input) input.value = v;
-    }
-  });
-  EXTRA.forEach(function(s) {
-    var v = (card.extra || {})[s.key];
-    if (v !== undefined) {
-      s.val = v;
-      document.getElementById('n_' + s.key).textContent = v;
-      var input = document.querySelector('#extraGrid [data-key="' + s.key + '"] input');
-      if (input) input.value = v;
     }
   });
   redraw();
@@ -440,36 +564,41 @@ function loadCard(card) {
 }
 
 function renderSavedCards() {
-  var cards = JSON.parse(localStorage.getItem('mma_cards') || '[]');
   var list = document.getElementById('cardList');
-  list.innerHTML = '';
-  if (cards.length === 0) {
-    list.innerHTML = '<span class="no-cards">아직 저장된 카드가 없습니다</span>';
-    return;
-  }
-  cards.forEach(function(card) {
-    var item = document.createElement('div');
-    item.className = 'card-item';
-    item.draggable = true;
-    item.dataset.id = card.id;
-    item.innerHTML =
-      '<img src="' + card.image + '" alt="' + card.name + '">' +
-      '<div class="card-name">' + card.name + (card.year ? ' ' + card.year : '') + '</div>' +
-      '<button class="card-del" title="삭제">✕</button>';
-    item.addEventListener('click', function() {
-      loadCard(card);
+  list.innerHTML = '<span class="no-cards">불러오는 중...</span>';
+
+  fetch('/api/cards')
+    .then(function(r) { return r.json(); })
+    .then(function(cards) {
+      list.innerHTML = '';
+      if (!cards.length) {
+        list.innerHTML = '<span class="no-cards">아직 저장된 카드가 없습니다</span>';
+        return;
+      }
+      cards.forEach(function(card) {
+        var item = document.createElement('div');
+        item.className = 'card-item';
+        item.draggable = true;
+        item.dataset.id = card.id;
+        item.innerHTML =
+          '<img src="' + (card.image || '') + '" alt="' + card.name + '">' +
+          '<div class="card-name">' + card.name + '</div>' +
+          '<button class="card-del" title="삭제">✕</button>';
+        item.addEventListener('click', function() { loadCard(card); });
+        item.addEventListener('dragstart', function(e) {
+          e.dataTransfer.setData('cardId', card.id);
+        });
+        item.querySelector('.card-del').addEventListener('click', function(e) {
+          e.stopPropagation();
+          fetch('/api/cards/' + card.id, { method: 'DELETE' })
+            .then(function() { renderSavedCards(); });
+        });
+        list.appendChild(item);
+      });
+    })
+    .catch(function() {
+      list.innerHTML = '<span class="no-cards">카드를 불러오지 못했습니다</span>';
     });
-    item.addEventListener('dragstart', function(e) {
-      e.dataTransfer.setData('cardId', card.id);
-    });
-    item.querySelector('.card-del').addEventListener('click', function(e) {
-      e.stopPropagation();
-      var all = JSON.parse(localStorage.getItem('mma_cards') || '[]');
-      localStorage.setItem('mma_cards', JSON.stringify(all.filter(function(c) { return c.id !== card.id; })));
-      renderSavedCards();
-    });
-    list.appendChild(item);
-  });
 }
 
 document.getElementById('saveBtn').addEventListener('click', function() {

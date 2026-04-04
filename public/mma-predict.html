@@ -914,15 +914,35 @@ var STAT_LABELS = {
   speed:'Speed', power:'Power', micwork:'Mic Work', aura:'Aura'
 };
 
-function getCards() {
-  return JSON.parse(localStorage.getItem('mma_cards') || '[]');
+var _cards = [];
+
+function loadCards(cb) {
+  fetch('/api/cards')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _cards = data;
+      if (cb) cb();
+    })
+    .catch(function() {
+      _cards = [];
+      if (cb) cb();
+    });
 }
 
 function calcScore(card) {
-  var all = Object.assign({}, card.stats || {}, card.extra || {});
+  var scores = {
+    fightiq:   card.score_fightiq   || 0,
+    cardio:    card.score_cardio    || 0,
+    wrestling: card.score_wrestling || 0,
+    power:     card.score_power     || 0,
+    striking:  card.score_striking  || 0,
+    jiujitsu:  card.score_jiujitsu  || 0,
+    speed:     card.score_speed     || 0,
+    chin:      card.score_chin      || 0,
+  };
   var score = 0;
   Object.keys(WEIGHTS).forEach(function(k) {
-    score += (all[k] || 0) * WEIGHTS[k];
+    score += (scores[k] || 0) * WEIGHTS[k];
   });
   return score;
 }
@@ -947,37 +967,38 @@ function resetAll() {
 
 function renderPool() {
   var pool = document.getElementById('cardPool');
-  var cards = getCards();
-  pool.innerHTML = '';
-  if (cards.length === 0) {
-    pool.innerHTML = '<div class="no-cards-msg">저장된 카드가 없습니다<br>← STAT 생성기에서 카드를 먼저 만들어주세요</div>';
-    return;
-  }
-  cards.forEach(function(card) {
-    var el = document.createElement('div');
-    el.className = 'pool-card';
-    el.draggable = true;
-    el.dataset.id = card.id;
-    el.innerHTML =
-      '<img src="' + card.image + '" alt="' + card.name + '">' +
-      '<div class="card-name">' + card.name + '</div>' +
-      '<div class="slot-btns">' +
-        '<button class="slot-btn slot-btn-a">A</button>' +
-        '<button class="slot-btn slot-btn-b">B</button>' +
-      '</div>';
-    el.querySelector('.slot-btn-a').addEventListener('click', function() { placeCard(card.id, 'A'); });
-    el.querySelector('.slot-btn-b').addEventListener('click', function() { placeCard(card.id, 'B'); });
-    el.addEventListener('dragstart', function(e) {
-      e.dataTransfer.setData('cardId', card.id);
-      e.dataTransfer.effectAllowed = 'move';
+  pool.innerHTML = '<div class="no-cards-msg">불러오는 중...</div>';
+  loadCards(function() {
+    pool.innerHTML = '';
+    if (_cards.length === 0) {
+      pool.innerHTML = '<div class="no-cards-msg">저장된 카드가 없습니다<br>← STAT 생성기에서 카드를 먼저 만들어주세요</div>';
+      return;
+    }
+    _cards.forEach(function(card) {
+      var el = document.createElement('div');
+      el.className = 'pool-card';
+      el.draggable = true;
+      el.dataset.id = card.id;
+      el.innerHTML =
+        '<img src="' + (card.image || '') + '" alt="' + card.name + '">' +
+        '<div class="card-name">' + card.name + '</div>' +
+        '<div class="slot-btns">' +
+          '<button class="slot-btn slot-btn-a">A</button>' +
+          '<button class="slot-btn slot-btn-b">B</button>' +
+        '</div>';
+      el.querySelector('.slot-btn-a').addEventListener('click', function() { placeCard(card.id, 'A'); });
+      el.querySelector('.slot-btn-b').addEventListener('click', function() { placeCard(card.id, 'B'); });
+      el.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('cardId', card.id);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      pool.appendChild(el);
     });
-    pool.appendChild(el);
   });
 }
 
 function placeCard(cardId, slot) {
-  var cards = getCards();
-  var card = cards.find(function(c) { return c.id === cardId; });
+  var card = _cards.find(function(c) { return c.id === cardId; });
   if (!card) return;
   if (slot === 'A') slotA = card;
   else slotB = card;
@@ -999,11 +1020,20 @@ function renderZone(slot) {
       '<div class="zone-placeholder">카드를 여기에<br>드래그하세요</div>';
     return;
   }
-  var all = Object.assign({}, card.stats || {}, card.extra || {});
+  var all = {
+    fightiq:   card.score_fightiq   || 0,
+    power:     card.score_power     || 0,
+    striking:  card.score_striking  || 0,
+    chin:      card.score_chin      || 0,
+    wrestling: card.score_wrestling || 0,
+    speed:     card.score_speed     || 0,
+    cardio:    card.score_cardio    || 0,
+    jiujitsu:  card.score_jiujitsu  || 0,
+  };
   var topStats = Object.keys(WEIGHTS)
     .sort(function(a,b){ return (all[b]||0)-(all[a]||0); })
     .slice(0,3)
-    .map(function(k){ return STAT_LABELS[k]+' '+( all[k]||0); });
+    .map(function(k){ return STAT_LABELS[k]+' '+(all[k]||0); });
   var score = Math.round(calcScore(card));
   zone.className = 'drop-zone ' + (slot === 'A' ? 'filled' : 'filled-b');
   zone.innerHTML =
