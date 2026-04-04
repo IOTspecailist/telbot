@@ -3,108 +3,95 @@ import { calcScores, type RawStats } from '@/lib/fighter-score'
 
 const WEIGHT_CLASSES = [
   'Strawweight', 'Flyweight', 'Bantamweight', 'Featherweight',
-  'Lightweight', 'Welterweight', 'Middleweight',
-  'Light Heavyweight', 'Heavyweight',
+  'Light Heavyweight', 'Lightweight', 'Welterweight', 'Middleweight', 'Heavyweight',
 ]
 
 function nameToSlug(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
-function parsePercent(text: string): number {
-  return parseFloat(text.replace('%', '')) / 100
+function parseTime(t: string): number {
+  const [m, s] = t.split(':').map(Number)
+  return (m || 0) + (s || 0) / 60
 }
 
-function parseTime(text: string): number {
-  const [m, s] = text.split(':').map(Number)
-  return m + s / 60
-}
-
-function parseNum(text: string): number {
-  return parseFloat(text.replace(/[^0-9.]/g, '')) || 0
-}
-
-async function fetchUFCFighter(slug: string) {
-  const url = `https://www.ufc.com/athlete/${slug}`
+async function fetchUFCFighter(slug: string): Promise<string> {
+  const url = `https://kr.ufc.com/athlete/${slug}`
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-    signal: AbortSignal.timeout(10000),
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+    },
+    signal: AbortSignal.timeout(12000),
   })
-  if (!res.ok) throw new Error(`UFC page not found: ${url}`)
+  if (!res.ok) throw new Error(`UFC page not found (${res.status}): ${url}`)
   return res.text()
 }
 
-function parseStats(html: string): { raw: RawStats; weightClass: string; detectedClasses: string[] } {
-  // 전적 파싱
-  const winsMatch = html.match(/(\d+)\s*<span[^>]*>\s*Wins?\s*<\/span>/i)
-    ?? html.match(/<div[^>]*class="[^"]*win[^"]*"[^>]*>\s*(\d+)/i)
-  const lossesMatch = html.match(/(\d+)\s*<span[^>]*>\s*Loss(?:es)?\s*<\/span>/i)
-    ?? html.match(/<div[^>]*class="[^"]*loss[^"]*"[^>]*>\s*(\d+)/i)
+function parseStats(html: string): { raw: RawStats; weightClass: string } {
+  // 1. 전적: "28-1-0 (W-L-D)"
+  const recordMatch = html.match(/(\d+)-(\d+)-\d+\s*\(W-L-D\)/)
+  const totalWins   = parseInt(recordMatch?.[1] ?? '0')
+  const totalLosses = parseInt(recordMatch?.[2] ?? '0')
 
-  // 파이터 통계 파싱 (data-value 또는 텍스트)
-  function extractStat(label: string): string {
-    const re = new RegExp(
-      `${label}[\\s\\S]*?([\\d.]+%?:[\\d.]+%?|[\\d.]+%|[\\d.]+)`,
-      'i'
-    )
-    const m = html.match(re)
-    return m?.[1] ?? '0'
-  }
+  // 2. Win by Method 섹션에서 KO/Dec/Sub 순서로 추출
+  const winSection = html.match(/Win by Method([\s\S]*?)(?=<h2|<\/section|$)/i)
+  const winBarVals = winSection
+    ? [...winSection[1].matchAll(/c-stat-3bar__value">\s*(\d+)/g)]
+    : []
+  const koWins  = parseInt(winBarVals[0]?.[1] ?? '0')
+  const decWins = parseInt(winBarVals[1]?.[1] ?? '0')
+  const subWins = parseInt(winBarVals[2]?.[1] ?? '0')
 
-  // UFC 페이지 구조 기반 파싱
-  const koWinsMatch = html.match(/KO\/TKO[\s\S]*?(\d+)(?=\s*(?:Wins?|<))/i)
-  const subWinsMatch = html.match(/Submissions?[\s\S]*?(\d+)(?=\s*(?:Wins?|<))/i)
-  const decWinsMatch = html.match(/Decisions?[\s\S]*?(\d+)(?=\s*(?:Wins?|<))/i)
+  // 3. c-stat-compare__number — 페이지 순서: SLpM, SApM, TD avg, Sub avg, Str Def%, TD Def%, KD avg, Avg time
+  const compareNums = [...html.matchAll(/<div class="c-stat-compare__number">\s*([\d.:]+)/g)]
+    .map(m => m[1].trim())
+  const spm       = parseFloat(compareNums[0] ?? '0')
+  const sapm      = parseFloat(compareNums[1] ?? '0')
+  const tdPer15   = parseFloat(compareNums[2] ?? '0')
+  const subsPer15 = parseFloat(compareNums[3] ?? '0')
+  const strDefInt = parseFloat(compareNums[4] ?? '0')  // 정수 e.g. 62
+  const tdDefInt  = parseFloat(compareNums[5] ?? '0')  // 정수 e.g. 91
+  // compareNums[6] = KD avg (미사용)
+  const avgFightStr = compareNums[7] ?? '0:00'
 
-  const spmMatch = html.match(/SLpM[\s\S]*?([\d.]+)/i)
-    ?? html.match(/Sig\.?\s*Str\.?\s*Landed[\s\S]*?per[\s\S]*?([\d.]+)/i)
-  const sapmMatch = html.match(/SApM[\s\S]*?([\d.]+)/i)
-    ?? html.match(/Sig\.?\s*Str\.?\s*Absorbed[\s\S]*?per[\s\S]*?([\d.]+)/i)
-  const strAccMatch = html.match(/Str\.?\s*Acc\.?[\s\S]*?([\d.]+%)/i)
-  const strDefMatch = html.match(/Str\.?\s*Def\.?[\s\S]*?([\d.]+%)/i)
-  const tdAccMatch = html.match(/TD\s*Acc\.?[\s\S]*?([\d.]+%)/i)
-  const tdDefMatch = html.match(/TD\s*Def\.?[\s\S]*?([\d.]+%)/i)
-  const tdAvgMatch = html.match(/TD\s*Avg\.?[\s\S]*?([\d.]+)/i)
-  const subAvgMatch = html.match(/Sub\.?\s*Avg\.?[\s\S]*?([\d.]+)/i)
-  const avgFightMatch = html.match(/avg\.?\s*fight\s*time[\s\S]*?(\d+:\d+)/i)
+  // 4. 원형 퍼센트: 타격 정확도, 테이크다운 정확도
+  const circlePercs = [...html.matchAll(/<text[^>]*class="e-chart-circle__percent"[^>]*>(\d+)%<\/text>/g)]
+    .map(m => parseInt(m[1]))
+  const strAcc = (circlePercs[0] ?? 0) / 100
+  const tdAcc  = (circlePercs[1] ?? 0) / 100
 
-  // 체급 파싱
+  // 5. 체급 (Light Heavyweight를 Lightweight보다 먼저 체크)
   let weightClass = 'Unknown'
-  const detectedClasses: string[] = []
+  const htmlLower = html.toLowerCase()
   for (const wc of WEIGHT_CLASSES) {
-    if (html.includes(wc)) {
-      detectedClasses.push(wc)
-      if (weightClass === 'Unknown') weightClass = wc
+    if (htmlLower.includes(wc.toLowerCase())) {
+      weightClass = wc
+      break
     }
   }
 
-  const totalWins = parseInt(winsMatch?.[1] ?? '0')
-  const totalLosses = parseInt(lossesMatch?.[1] ?? '0')
-  const koWins = parseInt(koWinsMatch?.[1] ?? '0')
-  const subWins = parseInt(subWinsMatch?.[1] ?? '0')
-  const decWins = parseInt(decWinsMatch?.[1] ?? '0')
-
   const raw: RawStats = {
-    spm:                parseNum(spmMatch?.[1] ?? '0'),
-    sapm:               parseNum(sapmMatch?.[1] ?? '0'),
-    striking_accuracy:  strAccMatch ? parsePercent(strAccMatch[1]) : 0,
-    striking_defense:   strDefMatch ? parsePercent(strDefMatch[1]) : 0,
-    takedown_accuracy:  tdAccMatch  ? parsePercent(tdAccMatch[1])  : 0,
-    takedown_defense:   tdDefMatch  ? parsePercent(tdDefMatch[1])  : 0,
-    td_per_15:          parseNum(tdAvgMatch?.[1] ?? '0'),
-    subs_per_15:        parseNum(subAvgMatch?.[1] ?? '0'),
-    avg_fight_min:      avgFightMatch ? parseTime(avgFightMatch[1]) : 0,
-    ko_wins:            koWins,
-    sub_wins:           subWins,
-    dec_wins:           decWins,
-    total_wins:         totalWins,
-    ko_losses:          0,
-    sub_losses:         0,
-    dec_losses:         0,
-    total_losses:       totalLosses,
+    spm,
+    sapm,
+    striking_accuracy: strAcc,
+    striking_defense:  strDefInt / 100,
+    takedown_accuracy: tdAcc,
+    takedown_defense:  tdDefInt / 100,
+    td_per_15:         tdPer15,
+    subs_per_15:       subsPer15,
+    avg_fight_min:     parseTime(avgFightStr),
+    ko_wins:           koWins,
+    sub_wins:          subWins,
+    dec_wins:          decWins,
+    total_wins:        totalWins,
+    ko_losses:         0,  // UFC 페이지에서 패배 방식 미제공
+    sub_losses:        0,
+    dec_losses:        0,
+    total_losses:      totalLosses,
   }
 
-  return { raw, weightClass, detectedClasses }
+  return { raw, weightClass }
 }
 
 export async function GET(req: NextRequest) {
@@ -117,18 +104,12 @@ export async function GET(req: NextRequest) {
 
   try {
     const html = await fetchUFCFighter(slug)
-    const { raw, weightClass, detectedClasses } = parseStats(html)
+    const { raw, weightClass } = parseStats(html)
     const scores = calcScores(raw)
 
-    return NextResponse.json({
-      slug,
-      weightClass,
-      detectedClasses,
-      raw,
-      scores,
-    })
+    return NextResponse.json({ slug, weightClass, raw, scores })
   } catch (e) {
     console.error('[fighter]', e)
-    return NextResponse.json({ error: 'Fighter not found on UFC.com' }, { status: 404 })
+    return NextResponse.json({ error: 'UFC.com에서 선수를 찾을 수 없습니다' }, { status: 404 })
   }
 }
