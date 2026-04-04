@@ -447,16 +447,14 @@ document.getElementById('searchBtn').addEventListener('click', function() {
   var status = document.getElementById('searchStatus');
   btn.disabled = true;
   btn.textContent = '검색 중...';
-  status.style.display = 'block';
-  status.className = 'search-status';
-  status.textContent = 'UFC 데이터 불러오는 중...';
+  status.style.display = 'none';
 
   fetch('/api/fighter?name=' + encodeURIComponent(name))
     .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
       if (!res.ok) {
-        status.className = 'search-status error';
-        status.textContent = res.data.error || '선수를 찾을 수 없습니다';
+        status.style.display = 'none';
+        alert(res.data.error || '선수를 찾을 수 없습니다. 이름을 확인해주세요.');
         return;
       }
       var d = res.data;
@@ -486,8 +484,8 @@ document.getElementById('searchBtn').addEventListener('click', function() {
       redraw();
     })
     .catch(function() {
-      status.className = 'search-status error';
-      status.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+      status.style.display = 'none';
+      alert('오류가 발생했습니다. 다시 시도해주세요.');
     })
     .finally(function() {
       btn.disabled = false;
