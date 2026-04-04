@@ -25,6 +25,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { id, name, weight_class, raw_stats, scores, image } = body
 
+    // image는 88×120px JPEG 썸네일 — 정상 범위 10KB 이내, 50KB 초과면 거부
+    if (image && typeof image === 'string' && image.length > 50000) {
+      return NextResponse.json({ error: 'Image too large' }, { status: 400 })
+    }
+    if (!name || typeof name !== 'string' || name.length > 100) {
+      return NextResponse.json({ error: 'Invalid name' }, { status: 400 })
+    }
+
     await sql`
       INSERT INTO mma_cards (
         id, name, weight_class, raw_stats,
