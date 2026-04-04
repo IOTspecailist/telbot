@@ -29,10 +29,11 @@ async function fetchUFCFighter(slug: string): Promise<string> {
 }
 
 function parseStats(html: string): { raw: RawStats; weightClass: string } {
-  // 1. 전적: "28-1-0 (W-L-D)"
+  // 1. 전적: "28-1-0 (W-L-D)" — 없으면 선수 페이지가 아님
   const recordMatch = html.match(/(\d+)-(\d+)-\d+\s*\(W-L-D\)/)
-  const totalWins   = parseInt(recordMatch?.[1] ?? '0')
-  const totalLosses = parseInt(recordMatch?.[2] ?? '0')
+  if (!recordMatch) throw new Error('FIGHTER_NOT_FOUND')
+  const totalWins   = parseInt(recordMatch[1])
+  const totalLosses = parseInt(recordMatch[2])
 
   // 2. Win by Method 섹션에서 KO/Dec/Sub 순서로 추출
   const winSection = html.match(/Win by Method([\s\S]*?)(?=<h2|<\/section|$)/i)
@@ -108,8 +109,12 @@ export async function GET(req: NextRequest) {
     const scores = calcScores(raw)
 
     return NextResponse.json({ slug, weightClass, raw, scores })
-  } catch (e) {
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : ''
+    if (msg === 'FIGHTER_NOT_FOUND') {
+      return NextResponse.json({ error: `"${name}" 선수를 UFC에서 찾을 수 없습니다. 영문 이름을 확인해주세요.` }, { status: 404 })
+    }
     console.error('[fighter]', e)
-    return NextResponse.json({ error: 'UFC.com에서 선수를 찾을 수 없습니다' }, { status: 404 })
+    return NextResponse.json({ error: 'UFC.com 데이터를 가져오지 못했습니다' }, { status: 500 })
   }
 }
