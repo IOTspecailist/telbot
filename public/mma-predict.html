@@ -1203,8 +1203,20 @@ function renderResult() {
   // 레이더 차트
   var nameA = slotA.name.split(' ')[0];
   var nameB = slotB.name.split(' ')[0];
-  var allA = Object.assign({}, slotA.stats || {}, slotA.extra || {});
-  var allB = Object.assign({}, slotB.stats || {}, slotB.extra || {});
+  function cardToStatsMap(card) {
+    return {
+      fightiq:   card.score_fightiq   || 0,
+      power:     card.score_power     || 0,
+      striking:  card.score_striking  || 0,
+      chin:      card.score_chin      || 0,
+      wrestling: card.score_wrestling || 0,
+      speed:     card.score_speed     || 0,
+      cardio:    card.score_cardio    || 0,
+      jiujitsu:  card.score_jiujitsu  || 0,
+    };
+  }
+  var allA = cardToStatsMap(slotA);
+  var allB = cardToStatsMap(slotB);
   drawRadar(allA, allB, nameA, nameB, prob, winSlot);
 
   var result = document.getElementById('result');
