@@ -111,7 +111,9 @@ CREATE TABLE mma_cards (
 
 ## 점수 계산 공식
 
-데이터 소스: `https://ufc.com/athlete/{slug}` (영문 UFC 공식 사이트)
+데이터 소스: `https://kr.ufc.com/athlete/{slug}` (한국 UFC 사이트 — SSR로 HTML 파싱 가능)
+
+> ⚠️ ufc.com(영문)은 JS 렌더링(SPA)으로 서버에서 fetch 시 빈 HTML 반환 → kr.ufc.com 사용
 
 공통 함수:
 ```
@@ -163,6 +165,24 @@ finish_loss_rate = (KO_losses + SUB_losses) / total_losses
 win_rate × 0.4 + (1 - finish_loss_rate) × 0.3 + striking_defense × 0.3
 ```
 
+> ⚠️ kr.ufc.com은 패배 방식(KO/Sub/Dec) 별도 섹션 미제공 → ko_losses, sub_losses, dec_losses = 0 고정
+> finish_loss_rate는 항상 0이 되므로 Fight IQ는 win_rate × 0.4 + striking_defense × 0.3 으로 사실상 계산됨
+
+---
+
+## HTML 파싱 구조 (kr.ufc.com 기준)
+
+| 데이터 | HTML 패턴 |
+|--------|-----------|
+| 전적 (W-L-D) | `hero-profile__division-body` → `"28-1-0 (W-L-D)"` |
+| Win by Method | `c-stat-3bar__title="Win by Method"` 이후 `c-stat-3bar__value` 3개 (KO, Dec, Sub 순) |
+| SLpM, SApM, TD avg, Sub avg | `c-stat-compare__number` 순서대로 (0~3번째) |
+| Str Def%, TD Def% | `c-stat-compare__number` 4~5번째 (정수, /100 변환) |
+| Avg fight time | `c-stat-compare__number` 7번째 (MM:SS 형식) |
+| Striking accuracy | `e-chart-circle__percent` 첫 번째 |
+| TD accuracy | `e-chart-circle__percent` 두 번째 |
+| 체급 | HTML 전문 소문자 검색 (Light Heavyweight → Lightweight 순서 주의) |
+
 ---
 
 ## API 설계
@@ -191,11 +211,22 @@ win_rate × 0.4 + (1 - finish_loss_rate) × 0.3 + striking_defense × 0.3
 
 ## 작업 순서
 
-1. Neon 콘솔 Query 탭에서 CREATE TABLE SQL 실행
-2. `lib/db.ts` 작성
-3. `app/api/fighter/route.ts` 작성 (UFC fetch + 점수 계산)
-4. `app/api/cards/route.ts` 작성
-5. `app/api/cards/[id]/route.ts` 작성
-6. `public/mma-stat.html` UI/로직 변경
-7. `public/mma-predict.html` 로직 변경
-8. Vercel 배포 후 테스트
+1. Neon 콘솔 Query 탭에서 CREATE TABLE SQL 실행 ✅
+2. `lib/db.ts` 작성 ✅
+3. `app/api/fighter/route.ts` 작성 (UFC fetch + 점수 계산) ✅
+4. `app/api/cards/route.ts` 작성 ✅
+5. `app/api/cards/[id]/route.ts` 작성 ✅
+6. `public/mma-stat.html` UI/로직 변경 ✅
+7. `public/mma-predict.html` 로직 변경 ✅
+8. Vercel 배포 후 테스트 ✅
+
+---
+
+## 구현 중 발견된 이슈 및 수정 사항 (2026-04-04)
+
+| 이슈 | 원인 | 수정 |
+|------|------|------|
+| 파싱 전부 오작동 (ko_wins=2025 등) | ufc.com이 SPA로 빈 HTML 반환 | kr.ufc.com으로 변경 + HTML 클래스 기반 파싱 재작성 |
+| predict 레이더 차트 미표시 | `card.stats`(구조) → `score_*`(새 구조) 미반영 | `renderResult`에서 `score_*` 컬럼 직접 참조 |
+| 없는 선수 검색 시 alert 미표시 | kr.ufc.com이 없는 선수도 200 반환 | W-L-D 레코드 없으면 `FIGHTER_NOT_FOUND` 에러로 404 반환 |
+| raw_stats의 ko_losses 등 항상 0 | kr.ufc.com에 패배 방식 섹션 없음 | 0으로 고정 (개선 필요 시 별도 소스 연동 검토) |
