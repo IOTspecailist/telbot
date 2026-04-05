@@ -28,12 +28,18 @@ async function fetchUFCFighter(slug: string): Promise<string> {
   return res.text()
 }
 
-function parseStats(html: string): { raw: RawStats; weightClass: string } {
+function parseStats(html: string, slug: string): { raw: RawStats; weightClass: string } {
   // 1. 전적: "28-1-0 (W-L-D)" — 없으면 선수 페이지가 아님
   const recordMatch = html.match(/(\d+)-(\d+)-\d+\s*\(W-L-D\)/)
   if (!recordMatch) throw new Error('FIGHTER_NOT_FOUND')
-  const totalWins   = parseInt(recordMatch[1])
-  const totalLosses = parseInt(recordMatch[2])
+  let totalWins   = parseInt(recordMatch[1])
+  let totalLosses = parseInt(recordMatch[2])
+
+  // Jones의 1패는 반칙패 — 현행 규정상 승리로 처리
+  if (slug === 'jon-jones' && totalLosses === 1) {
+    totalWins += 1
+    totalLosses = 0
+  }
 
   // 2. Win by Method 섹션에서 KO/Dec/Sub 순서로 추출
   const winSection = html.match(/Win by Method([\s\S]*?)(?=<h2|<\/section|$)/i)
@@ -106,7 +112,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const html = await fetchUFCFighter(slug)
-    const { raw, weightClass } = parseStats(html)
+    const { raw, weightClass } = parseStats(html, slug)
     const scores = calcScores(raw)
 
     return NextResponse.json({ slug, weightClass, raw, scores })

@@ -88,15 +88,27 @@ export function calcScores(s: RawStats): Scores {
   const grapplingVol = normalize(s.avg_fight_min * (s.td_per_15 / 15), 0, 8)
   const cardio = Math.max(strikingVol, grapplingVol)
 
-  // Fight IQ: 승률 + 나쁘게 안 지는 것 + 방어 지능
+  // Fight IQ: 9개 스탯 기반 + 경험 가중치, 선형 매핑
+  // base = (승률×2 + SLpM + StrAcc + StrDef + TDAcc + TDavg + TDDef + Subavg − SApM) / 9
   const winRate = totalFights > 0 ? s.total_wins / totalFights : 0
-  const finishLossRate = s.total_losses > 0
-    ? (s.ko_losses + s.sub_losses) / s.total_losses
+  const fiqBase = (
+    winRate * 2 +
+    normalize(s.strikePerMin, 1.5, 7.0) +
+    s.striking_accuracy +
+    s.striking_defense +
+    s.takedown_accuracy +
+    normalize(s.td_per_15, 0, 6) +
+    s.takedown_defense +
+    normalize(s.subs_per_15, 0, 1.5) -
+    normalize(s.allowedPerMin, 1.5, 7.0)
+  ) / 9
+  // 경험 가중치: winRate ≥ 85%, 10/15/20/25/30승 티어당 +0.025
+  const fiqBonus = winRate >= 0.85
+    ? [10, 15, 20, 25, 30].filter(t => s.total_wins >= t).length * 0.025
     : 0
-  const fightiq =
-    winRate * 0.4 +
-    (1 - finishLossRate) * 0.3 +
-    s.striking_defense * 0.3
+  // 선형 매핑: Jones 29-0 → 10 (anchor 0.7279), Chandler 23-10 → 3 (anchor 0.4407)
+  const fiqMapped = (fiqBase + fiqBonus - 0.4407) / (0.7279 - 0.4407) * 7 + 3
+  const fightiq = Math.min(10, Math.max(1, Math.round(fiqMapped)))
 
   return {
     power:           power,
@@ -106,6 +118,6 @@ export function calcScores(s: RawStats): Scores {
     wrestlingDefense: toScore(wrestlingDefense),
     jiujitsu:        toScore(jiujitsu),
     cardio:          toScore(cardio),
-    fightiq:         toScore(fightiq),
+    fightiq,
   }
 }
