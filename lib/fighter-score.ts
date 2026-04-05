@@ -41,10 +41,25 @@ function toScore(n: number): number {
 export function calcScores(s: RawStats): Scores {
   const totalFights = s.total_wins + s.total_losses
 
-  // Power: KO승리비율 × 0.6 + KD avg(정규화) × 0.4
-  const power = s.total_wins > 0
-    ? (s.ko_wins / s.total_wins) * 0.6 + normalize(s.kd_avg, 0, 2) * 0.4
-    : normalize(s.kd_avg, 0, 2) * 0.4
+  // Power
+  // 엘리트(ko승률 ≥80% 또는 kd_avg ≥1.5): base 9
+  // 그 외: ko승률 raw 스케일(ceiling 없음) → koScore가 4 이하이면서 kd_avg ≥0.25이면 +1 보정
+  // 보너스 +1(최대 10점): 타격정확도 ≥60% + (ko≥80% and kd≥0.75) or (kd≥1.5 and ko≥75%)
+  const koRate = s.total_wins > 0 ? s.ko_wins / s.total_wins : 0
+  let powerBase: number
+  if (koRate >= 0.80 || s.kd_avg >= 1.5) {
+    powerBase = 9
+  } else {
+    const koScore = Math.min(8, Math.max(1, Math.round(koRate * 8 + 1)))
+    powerBase = (koScore <= 4 && s.kd_avg >= 0.25) ? Math.min(8, koScore + 1) : koScore
+  }
+  const powerBonus = (
+    s.striking_accuracy >= 0.60 && (
+      (koRate >= 0.80 && s.kd_avg >= 0.75) ||
+      (s.kd_avg >= 1.5 && koRate >= 0.75)
+    )
+  ) ? 1 : 0
+  const power = Math.min(10, powerBase + powerBonus)
 
   // 타격성공: 타격정확도 × 0.6 + strikePerMin정규화 × 0.4
   const strikingOffense =
@@ -84,7 +99,7 @@ export function calcScores(s: RawStats): Scores {
     s.striking_defense * 0.3
 
   return {
-    power:           toScore(power),
+    power:           power,
     strikingOffense: toScore(strikingOffense),
     strikingDefense: toScore(strikingDefense),
     wrestlingOffense: toScore(wrestlingOffense),
