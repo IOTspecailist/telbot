@@ -903,15 +903,15 @@ body {
 var slotA = null, slotB = null;
 
 var WEIGHTS = {
-  fightiq:1.5, cardio:1.4, wrestling:1.3,
-  power:1.3, striking:1.2, jiujitsu:1.1,
-  speed:1.0, chin:1.0
+  fightiq:1.5, cardio:1.4, wrestlingDefense:1.3,
+  power:1.3, strikingOffense:1.2, jiujitsu:1.1,
+  strikingDefense:1.0, wrestlingOffense:1.0
   // micwork, aura 계산 제외
 };
 var STAT_LABELS = {
-  fightiq:'Fight IQ', striking:'Striking', wrestling:'Wrestling',
-  jiujitsu:'Jiu-Jitsu', chin:'Chin', cardio:'Cardio',
-  speed:'Speed', power:'Power', micwork:'Mic Work', aura:'Aura'
+  fightiq:'Fight IQ', strikingOffense:'타격성공', wrestlingDefense:'레슬링방어',
+  jiujitsu:'서브미션', wrestlingOffense:'레슬링성공', cardio:'Cardio',
+  strikingDefense:'타격방어', power:'Power', micwork:'Mic Work', aura:'Aura'
 };
 
 var _cards = [];
@@ -931,14 +931,14 @@ function loadCards(cb) {
 
 function calcScore(card) {
   var scores = {
-    fightiq:   card.score_fightiq   || 0,
-    cardio:    card.score_cardio    || 0,
-    wrestling: card.score_wrestling || 0,
-    power:     card.score_power     || 0,
-    striking:  card.score_striking  || 0,
-    jiujitsu:  card.score_jiujitsu  || 0,
-    speed:     card.score_speed     || 0,
-    chin:      card.score_chin      || 0,
+    fightiq:          card.score_fightiq          || 0,
+    cardio:           card.score_cardio           || 0,
+    wrestlingDefense: card.score_wrestlingdefense || 0,
+    power:            card.score_power            || 0,
+    strikingOffense:  card.score_strikingoffense  || 0,
+    jiujitsu:         card.score_jiujitsu         || 0,
+    strikingDefense:  card.score_strikingdefense  || 0,
+    wrestlingOffense: card.score_wrestlingoffense || 0,
   };
   var score = 0;
   Object.keys(WEIGHTS).forEach(function(k) {
@@ -1021,14 +1021,14 @@ function renderZone(slot) {
     return;
   }
   var all = {
-    fightiq:   card.score_fightiq   || 0,
-    power:     card.score_power     || 0,
-    striking:  card.score_striking  || 0,
-    chin:      card.score_chin      || 0,
-    wrestling: card.score_wrestling || 0,
-    speed:     card.score_speed     || 0,
-    cardio:    card.score_cardio    || 0,
-    jiujitsu:  card.score_jiujitsu  || 0,
+    fightiq:          card.score_fightiq          || 0,
+    power:            card.score_power            || 0,
+    strikingOffense:  card.score_strikingoffense  || 0,
+    wrestlingOffense: card.score_wrestlingoffense || 0,
+    wrestlingDefense: card.score_wrestlingdefense || 0,
+    strikingDefense:  card.score_strikingdefense  || 0,
+    cardio:           card.score_cardio           || 0,
+    jiujitsu:         card.score_jiujitsu         || 0,
   };
   var topStats = Object.keys(WEIGHTS)
     .sort(function(a,b){ return (all[b]||0)-(all[a]||0); })
@@ -1205,14 +1205,14 @@ function renderResult() {
   var nameB = slotB.name.split(' ')[0];
   function cardToStatsMap(card) {
     return {
-      fightiq:   card.score_fightiq   || 0,
-      power:     card.score_power     || 0,
-      striking:  card.score_striking  || 0,
-      chin:      card.score_chin      || 0,
-      wrestling: card.score_wrestling || 0,
-      speed:     card.score_speed     || 0,
-      cardio:    card.score_cardio    || 0,
-      jiujitsu:  card.score_jiujitsu  || 0,
+      fightiq:          card.score_fightiq          || 0,
+      power:            card.score_power            || 0,
+      strikingOffense:  card.score_strikingoffense  || 0,
+      wrestlingOffense: card.score_wrestlingoffense || 0,
+      wrestlingDefense: card.score_wrestlingdefense || 0,
+      strikingDefense:  card.score_strikingdefense  || 0,
+      cardio:           card.score_cardio           || 0,
+      jiujitsu:         card.score_jiujitsu         || 0,
     };
   }
   var allA = cardToStatsMap(slotA);
@@ -1233,8 +1233,8 @@ function renderResult() {
 }
 
 // ── 레이더 차트 ──
-var RADAR_KEYS = ['fightiq','power','striking','chin','wrestling','speed','cardio','jiujitsu'];
-var RADAR_LABELS = ['FIGHT IQ','POWER','STRIKING','CHIN','WRESTLING','SPEED','CARDIO','JIU-JITSU'];
+var RADAR_KEYS = ['fightiq','power','strikingOffense','wrestlingOffense','wrestlingDefense','strikingDefense','cardio','jiujitsu'];
+var RADAR_LABELS = ['FIGHT IQ','POWER','타격성공','레슬링성공','레슬링방어','타격방어','CARDIO','서브미션'];
 var RADAR_ANGLES = [0,1,2,3,4,5,6,7].map(function(i){ return -90 + 45*i; });
 
 function radarToRad(deg) { return deg * Math.PI / 180; }

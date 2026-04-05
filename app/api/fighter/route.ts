@@ -47,13 +47,13 @@ function parseStats(html: string): { raw: RawStats; weightClass: string } {
   // 3. c-stat-compare__number — 페이지 순서: SLpM, SApM, TD avg, Sub avg, Str Def%, TD Def%, KD avg, Avg time
   const compareNums = [...html.matchAll(/<div class="c-stat-compare__number">\s*([\d.:]+)/g)]
     .map(m => m[1].trim())
-  const spm       = parseFloat(compareNums[0] ?? '0')
-  const sapm      = parseFloat(compareNums[1] ?? '0')
+  const strikePerMin    = parseFloat(compareNums[0] ?? '0')
+  const allowedPerMin   = parseFloat(compareNums[1] ?? '0')
   const tdPer15   = parseFloat(compareNums[2] ?? '0')
   const subsPer15 = parseFloat(compareNums[3] ?? '0')
   const strDefInt = parseFloat(compareNums[4] ?? '0')  // 정수 e.g. 62
   const tdDefInt  = parseFloat(compareNums[5] ?? '0')  // 정수 e.g. 91
-  // compareNums[6] = KD avg (미사용)
+  const kdAvg      = parseFloat(compareNums[6] ?? '0')
   const avgFightStr = compareNums[7] ?? '0:00'
 
   // 4. 원형 퍼센트: 타격 정확도, 테이크다운 정확도
@@ -73,8 +73,8 @@ function parseStats(html: string): { raw: RawStats; weightClass: string } {
   }
 
   const raw: RawStats = {
-    spm,
-    sapm,
+    strikePerMin,
+    allowedPerMin,
     striking_accuracy: strAcc,
     striking_defense:  strDefInt / 100,
     takedown_accuracy: tdAcc,
@@ -82,6 +82,7 @@ function parseStats(html: string): { raw: RawStats; weightClass: string } {
     td_per_15:         tdPer15,
     subs_per_15:       subsPer15,
     avg_fight_min:     parseTime(avgFightStr),
+    kd_avg:            kdAvg,
     ko_wins:           koWins,
     sub_wins:          subWins,
     dec_wins:          decWins,

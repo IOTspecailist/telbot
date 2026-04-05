@@ -6,8 +6,8 @@ export async function GET() {
   try {
     const rows = await sql`
       SELECT id, name, weight_class,
-             score_power, score_striking, score_speed, score_chin,
-             score_wrestling, score_jiujitsu, score_cardio, score_fightiq,
+             score_power, score_strikingoffense, score_strikingdefense, score_wrestlingoffense,
+             score_wrestlingdefense, score_jiujitsu, score_cardio, score_fightiq,
              image, created_at
       FROM mma_cards
       ORDER BY created_at DESC
@@ -36,27 +36,27 @@ export async function POST(req: NextRequest) {
     await sql`
       INSERT INTO mma_cards (
         id, name, weight_class, raw_stats,
-        score_power, score_striking, score_speed, score_chin,
-        score_wrestling, score_jiujitsu, score_cardio, score_fightiq,
+        score_power, score_strikingoffense, score_strikingdefense, score_wrestlingoffense,
+        score_wrestlingdefense, score_jiujitsu, score_cardio, score_fightiq,
         image
       ) VALUES (
         ${id}, ${name}, ${weight_class}, ${JSON.stringify(raw_stats)},
-        ${scores.power}, ${scores.striking}, ${scores.speed}, ${scores.chin},
-        ${scores.wrestling}, ${scores.jiujitsu}, ${scores.cardio}, ${scores.fightiq},
+        ${scores.power}, ${scores.strikingOffense}, ${scores.strikingDefense}, ${scores.wrestlingOffense},
+        ${scores.wrestlingDefense}, ${scores.jiujitsu}, ${scores.cardio}, ${scores.fightiq},
         ${image ?? null}
       )
       ON CONFLICT (id) DO UPDATE SET
         name         = EXCLUDED.name,
         weight_class = EXCLUDED.weight_class,
         raw_stats    = EXCLUDED.raw_stats,
-        score_power     = EXCLUDED.score_power,
-        score_striking  = EXCLUDED.score_striking,
-        score_speed     = EXCLUDED.score_speed,
-        score_chin      = EXCLUDED.score_chin,
-        score_wrestling = EXCLUDED.score_wrestling,
-        score_jiujitsu  = EXCLUDED.score_jiujitsu,
-        score_cardio    = EXCLUDED.score_cardio,
-        score_fightiq   = EXCLUDED.score_fightiq,
+        score_power              = EXCLUDED.score_power,
+        score_strikingoffense    = EXCLUDED.score_strikingoffense,
+        score_strikingdefense    = EXCLUDED.score_strikingdefense,
+        score_wrestlingoffense   = EXCLUDED.score_wrestlingoffense,
+        score_wrestlingdefense   = EXCLUDED.score_wrestlingdefense,
+        score_jiujitsu           = EXCLUDED.score_jiujitsu,
+        score_cardio             = EXCLUDED.score_cardio,
+        score_fightiq            = EXCLUDED.score_fightiq,
         image        = EXCLUDED.image
     `
     return NextResponse.json({ ok: true })

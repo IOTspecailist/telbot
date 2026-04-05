@@ -362,14 +362,14 @@ select:focus { border-color:#d4001a; }
 
 <script>
 var STATS = [
-  {key:'fightiq',   label:'Fight IQ',  val:5},
-  {key:'power',     label:'Power',     val:5},
-  {key:'striking',  label:'Striking',  val:5},
-  {key:'chin',      label:'Chin',      val:5},
-  {key:'wrestling', label:'Wrestling', val:5},
-  {key:'speed',     label:'Speed',     val:5},
-  {key:'cardio',    label:'Cardio',    val:5},
-  {key:'jiujitsu',  label:'Jiu-Jitsu', val:5}
+  {key:'fightiq',          label:'Fight IQ',    val:5},
+  {key:'power',            label:'Power',       val:5},
+  {key:'strikingOffense',  label:'타격성공',    val:5},
+  {key:'wrestlingOffense', label:'레슬링성공',  val:5},
+  {key:'wrestlingDefense', label:'레슬링방어',  val:5},
+  {key:'strikingDefense',  label:'타격방어',    val:5},
+  {key:'cardio',           label:'Cardio',      val:5},
+  {key:'jiujitsu',         label:'서브미션',    val:5}
 ];
 
 var EXTRA = [
@@ -462,8 +462,9 @@ document.getElementById('searchBtn').addEventListener('click', function() {
       _currentScores = d.scores;
 
       // 스탯 반영
-      var keyMap = {fightiq:'fightiq', power:'power', striking:'striking', chin:'chin',
-                    wrestling:'wrestling', speed:'speed', cardio:'cardio', jiujitsu:'jiujitsu'};
+      var keyMap = {fightiq:'fightiq', power:'power', strikingOffense:'strikingOffense',
+                    wrestlingOffense:'wrestlingOffense', wrestlingDefense:'wrestlingDefense',
+                    strikingDefense:'strikingDefense', cardio:'cardio', jiujitsu:'jiujitsu'};
       STATS.forEach(function(s) {
         var v = d.scores[keyMap[s.key]];
         if (v !== undefined) {
@@ -546,8 +547,8 @@ function loadCard(card) {
   document.getElementById('nameInput').value = card.name || '';
   var scores = {
     fightiq: card.score_fightiq, power: card.score_power,
-    striking: card.score_striking, chin: card.score_chin,
-    wrestling: card.score_wrestling, speed: card.score_speed,
+    strikingOffense: card.score_strikingoffense, wrestlingOffense: card.score_wrestlingoffense,
+    wrestlingDefense: card.score_wrestlingdefense, strikingDefense: card.score_strikingdefense,
     cardio: card.score_cardio, jiujitsu: card.score_jiujitsu
   };
   STATS.forEach(function(s) {
