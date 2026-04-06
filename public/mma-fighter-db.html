@@ -17,6 +17,19 @@ body {
   align-items:center;
   gap:12px;
 }
+.top-bar {
+  width:100%;
+  max-width:520px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.top-bar h1 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;
+  color:#1a1a1a;
+  letter-spacing:4px;
+}
 .panel {
   width:100%;
   max-width:520px;
@@ -64,6 +77,21 @@ input[type=text]:focus { border-color:#d4001a; }
 }
 .btn:hover { background:#b8001a; }
 .btn:disabled { background:#ccc; cursor:default; }
+.btn-outline {
+  padding:7px 14px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,0.18);
+  border-radius:3px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;
+  letter-spacing:2px;
+  color:#555;
+  cursor:pointer;
+  white-space:nowrap;
+  text-decoration:none;
+  display:inline-block;
+}
+.btn-outline:hover { border-color:#d4001a; color:#d4001a; }
 .btn-save {
   width:100%;
   max-width:520px;
@@ -149,21 +177,42 @@ input[type=text]:focus { border-color:#d4001a; }
   display:flex;
   justify-content:space-between;
   align-items:center;
-  font-size:13px;
+  cursor:pointer;
+  transition:border-color 0.15s;
 }
+.fighter-row:hover { border-color:#d4001a; }
+.fighter-row.active { border-color:#d4001a; border-left:3px solid #d4001a; }
 .fighter-row .fname {
   font-family:'Bebas Neue',sans-serif;
   font-size:15px;
   letter-spacing:1px;
 }
-.fighter-row .fmeta { color:#888; font-size:11px; }
+.fighter-row .fmeta { color:#888; font-size:11px; margin-top:1px; }
+.fighter-row .row-actions { display:flex; gap:6px; align-items:center; }
+.btn-del {
+  padding:4px 10px;
+  background:#fff;
+  border:1px solid rgba(212,0,26,0.3);
+  border-radius:3px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;
+  letter-spacing:1px;
+  color:#d4001a;
+  cursor:pointer;
+}
+.btn-del:hover { background:#d4001a; color:#fff; }
 </style>
 </head>
 <body>
 
+<div class="top-bar">
+  <h1>FIGHTER DB</h1>
+  <a href="/" class="btn-outline">HOME</a>
+</div>
+
 <!-- 검색 -->
 <div class="panel">
-  <h2>FIGHTER DB — 선수 검색</h2>
+  <h2>선수 검색 (UFC 홈페이지)</h2>
   <div class="row">
     <input type="text" id="nameInput" placeholder="FIGHTER NAME (EN)" />
     <button class="btn" id="searchBtn">검색</button>
@@ -212,7 +261,6 @@ input[type=text]:focus { border-color:#d4001a; }
       <tr><td>그라운드</td><td id="s_pos_ground_count">—</td><td id="s_pos_ground_pct">—</td></tr>
     </tbody>
   </table>
-
 </div>
 
 <button class="btn-save" id="saveBtn" style="display:none;">DB에 저장</button>
@@ -221,13 +269,14 @@ input[type=text]:focus { border-color:#d4001a; }
 <div class="fighter-list">
   <div class="fighter-list-header">
     <span>저장된 선수</span>
-    <button class="btn" id="refreshBtn" style="padding:5px 12px;font-size:12px;">새로고침</button>
+    <button class="btn-outline" id="refreshBtn">새로고침</button>
   </div>
   <div id="fighterListBody"></div>
 </div>
 
 <script>
 var _current = null;
+var _savedData = {};  // slug → row 캐시
 
 function showStatus(msg, type) {
   var el = document.getElementById('status');
@@ -240,38 +289,62 @@ function pct(v) { return (v * 100).toFixed(1) + '%'; }
 function fix2(v) { return parseFloat(v).toFixed(2); }
 
 function fillStats(d) {
-  var r = d.raw;
-  var pos = d.position;
-  var tgt = d.target;
+  // d는 /api/fighter 응답 또는 저장된 row
+  var isRaw = !!d.raw;  // API 응답이면 raw/position/target 구조, DB row면 flat 구조
 
-  document.getElementById('resultTitle').textContent =
-    d.slug.toUpperCase().replace(/-/g,' ') + '  ·  ' + d.weightClass;
+  var title = (d.slug || '').toUpperCase().replace(/-/g,' ') + '  ·  ' + (d.weightClass || d.weight_class || '');
+  document.getElementById('resultTitle').textContent = title;
 
-  document.getElementById('s_total_wins').textContent   = r.total_wins;
-  document.getElementById('s_total_losses').textContent = r.total_losses;
-  document.getElementById('s_ko_wins').textContent      = r.ko_wins;
-  document.getElementById('s_sub_wins').textContent     = r.sub_wins;
-  document.getElementById('s_dec_wins').textContent     = r.dec_wins;
+  if (isRaw) {
+    var r = d.raw, pos = d.position;
+    document.getElementById('s_total_wins').textContent   = r.total_wins;
+    document.getElementById('s_total_losses').textContent = r.total_losses;
+    document.getElementById('s_ko_wins').textContent      = r.ko_wins;
+    document.getElementById('s_sub_wins').textContent     = r.sub_wins;
+    document.getElementById('s_dec_wins').textContent     = r.dec_wins;
+    document.getElementById('s_strike_per_min').textContent   = fix2(r.strikePerMin);
+    document.getElementById('s_allowed_per_min').textContent  = fix2(r.allowedPerMin);
+    document.getElementById('s_striking_accuracy').textContent = pct(r.striking_accuracy);
+    document.getElementById('s_striking_defense').textContent  = pct(r.striking_defense);
+    document.getElementById('s_kd_avg').textContent            = fix2(r.kd_avg);
+    document.getElementById('s_td_per_15').textContent         = fix2(r.td_per_15);
+    document.getElementById('s_takedown_accuracy').textContent = pct(r.takedown_accuracy);
+    document.getElementById('s_takedown_defense').textContent  = pct(r.takedown_defense);
+    document.getElementById('s_subs_per_15').textContent       = fix2(r.subs_per_15);
+    document.getElementById('s_avg_fight_min').textContent     = fix2(r.avg_fight_min);
+    document.getElementById('s_pos_standing_count').textContent = pos.posStanding.count;
+    document.getElementById('s_pos_standing_pct').textContent   = pos.posStanding.pct + '%';
+    document.getElementById('s_pos_clinch_count').textContent   = pos.posClinch.count;
+    document.getElementById('s_pos_clinch_pct').textContent     = pos.posClinch.pct + '%';
+    document.getElementById('s_pos_ground_count').textContent   = pos.posGround.count;
+    document.getElementById('s_pos_ground_pct').textContent     = pos.posGround.pct + '%';
+  } else {
+    // DB row: flat 구조
+    document.getElementById('s_total_wins').textContent   = d.total_wins;
+    document.getElementById('s_total_losses').textContent = d.total_losses;
+    document.getElementById('s_ko_wins').textContent      = d.ko_wins;
+    document.getElementById('s_sub_wins').textContent     = d.sub_wins;
+    document.getElementById('s_dec_wins').textContent     = d.dec_wins;
+    document.getElementById('s_strike_per_min').textContent   = fix2(d.strike_per_min);
+    document.getElementById('s_allowed_per_min').textContent  = fix2(d.allowed_per_min);
+    document.getElementById('s_striking_accuracy').textContent = pct(d.striking_accuracy);
+    document.getElementById('s_striking_defense').textContent  = pct(d.striking_defense);
+    document.getElementById('s_kd_avg').textContent            = fix2(d.kd_avg);
+    document.getElementById('s_td_per_15').textContent         = fix2(d.td_per_15);
+    document.getElementById('s_takedown_accuracy').textContent = pct(d.takedown_accuracy);
+    document.getElementById('s_takedown_defense').textContent  = pct(d.takedown_defense);
+    document.getElementById('s_subs_per_15').textContent       = fix2(d.subs_per_15);
+    document.getElementById('s_avg_fight_min').textContent     = fix2(d.avg_fight_min);
+    document.getElementById('s_pos_standing_count').textContent = d.pos_standing_count ?? '—';
+    document.getElementById('s_pos_standing_pct').textContent   = d.pos_standing_pct != null ? d.pos_standing_pct + '%' : '—';
+    document.getElementById('s_pos_clinch_count').textContent   = d.pos_clinch_count ?? '—';
+    document.getElementById('s_pos_clinch_pct').textContent     = d.pos_clinch_pct != null ? d.pos_clinch_pct + '%' : '—';
+    document.getElementById('s_pos_ground_count').textContent   = d.pos_ground_count ?? '—';
+    document.getElementById('s_pos_ground_pct').textContent     = d.pos_ground_pct != null ? d.pos_ground_pct + '%' : '—';
+  }
 
-  document.getElementById('s_strike_per_min').textContent   = fix2(r.strikePerMin);
-  document.getElementById('s_allowed_per_min').textContent  = fix2(r.allowedPerMin);
-  document.getElementById('s_striking_accuracy').textContent = pct(r.striking_accuracy);
-  document.getElementById('s_striking_defense').textContent  = pct(r.striking_defense);
-  document.getElementById('s_kd_avg').textContent            = fix2(r.kd_avg);
-
-  document.getElementById('s_td_per_15').textContent         = fix2(r.td_per_15);
-  document.getElementById('s_takedown_accuracy').textContent = pct(r.takedown_accuracy);
-  document.getElementById('s_takedown_defense').textContent  = pct(r.takedown_defense);
-  document.getElementById('s_subs_per_15').textContent       = fix2(r.subs_per_15);
-  document.getElementById('s_avg_fight_min').textContent     = fix2(r.avg_fight_min);
-
-  document.getElementById('s_pos_standing_count').textContent = pos.posStanding.count;
-  document.getElementById('s_pos_standing_pct').textContent   = pos.posStanding.pct + '%';
-  document.getElementById('s_pos_clinch_count').textContent   = pos.posClinch.count;
-  document.getElementById('s_pos_clinch_pct').textContent     = pos.posClinch.pct + '%';
-  document.getElementById('s_pos_ground_count').textContent   = pos.posGround.count;
-  document.getElementById('s_pos_ground_pct').textContent     = pos.posGround.pct + '%';
-
+  document.getElementById('resultPanel').style.display = 'flex';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // 검색
@@ -281,21 +354,18 @@ document.getElementById('searchBtn').addEventListener('click', function() {
   var btn = document.getElementById('searchBtn');
   btn.disabled = true;
   btn.textContent = '검색 중...';
-  document.getElementById('resultPanel').style.display = 'none';
   document.getElementById('saveBtn').style.display = 'none';
   document.getElementById('status').style.display = 'none';
+  setActive(null);
 
   fetch('/api/fighter?name=' + encodeURIComponent(name))
     .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(res) {
-      if (!res.ok) {
-        showStatus(res.data.error || '선수를 찾을 수 없습니다.', 'err');
-        return;
-      }
+      if (!res.ok) { showStatus(res.data.error || '선수를 찾을 수 없습니다.', 'err'); return; }
       _current = res.data;
       _current._name = name;
+      _current._mode = 'search';
       fillStats(res.data);
-      document.getElementById('resultPanel').style.display = 'flex';
       document.getElementById('saveBtn').style.display = 'block';
       showStatus('✓ 데이터 로드 완료 — 확인 후 저장하세요', 'ok');
     })
@@ -305,88 +375,106 @@ document.getElementById('searchBtn').addEventListener('click', function() {
 
 // 저장
 document.getElementById('saveBtn').addEventListener('click', function() {
-  if (!_current) return;
+  if (!_current || _current._mode !== 'search') return;
   var btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.textContent = '저장 중...';
 
-  var r = _current.raw;
-  var pos = _current.position;
-  var tgt = _current.target;
-
+  var r = _current.raw, pos = _current.position;
   var body = {
-    slug:              _current.slug,
-    name:              _current._name,
-    weight_class:      _current.weightClass,
-    total_wins:        r.total_wins,
-    total_losses:      r.total_losses,
-    ko_wins:           r.ko_wins,
-    sub_wins:          r.sub_wins,
-    dec_wins:          r.dec_wins,
-    ko_losses:         r.ko_losses,
-    sub_losses:        r.sub_losses,
-    dec_losses:        r.dec_losses,
-    strike_per_min:    r.strikePerMin,
-    allowed_per_min:   r.allowedPerMin,
-    striking_accuracy: r.striking_accuracy,
-    striking_defense:  r.striking_defense,
-    takedown_accuracy: r.takedown_accuracy,
-    takedown_defense:  r.takedown_defense,
-    td_per_15:         r.td_per_15,
-    subs_per_15:       r.subs_per_15,
-    avg_fight_min:     r.avg_fight_min,
-    kd_avg:            r.kd_avg,
-    pos_standing_count: pos.posStanding.count,
-    pos_standing_pct:   pos.posStanding.pct,
-    pos_clinch_count:   pos.posClinch.count,
-    pos_clinch_pct:     pos.posClinch.pct,
-    pos_ground_count:   pos.posGround.count,
-    pos_ground_pct:     pos.posGround.pct,
+    slug: _current.slug, name: _current._name, weight_class: _current.weightClass,
+    total_wins: r.total_wins, total_losses: r.total_losses,
+    ko_wins: r.ko_wins, sub_wins: r.sub_wins, dec_wins: r.dec_wins,
+    ko_losses: r.ko_losses, sub_losses: r.sub_losses, dec_losses: r.dec_losses,
+    strike_per_min: r.strikePerMin, allowed_per_min: r.allowedPerMin,
+    striking_accuracy: r.striking_accuracy, striking_defense: r.striking_defense,
+    takedown_accuracy: r.takedown_accuracy, takedown_defense: r.takedown_defense,
+    td_per_15: r.td_per_15, subs_per_15: r.subs_per_15,
+    avg_fight_min: r.avg_fight_min, kd_avg: r.kd_avg,
+    pos_standing_count: pos.posStanding.count, pos_standing_pct: pos.posStanding.pct,
+    pos_clinch_count: pos.posClinch.count,     pos_clinch_pct: pos.posClinch.pct,
+    pos_ground_count: pos.posGround.count,     pos_ground_pct: pos.posGround.pct,
   };
 
-  fetch('/api/ufc-fighters', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  })
+  fetch('/api/ufc-fighters', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (res.ok) {
         showStatus('✓ 저장 완료: ' + _current._name, 'ok');
         btn.textContent = '저장 완료 ✓';
         loadFighters();
-        setTimeout(function() {
-          btn.textContent = 'DB에 저장';
-          btn.disabled = false;
-        }, 2000);
+        setTimeout(function() { btn.textContent = 'DB에 저장'; btn.disabled = false; }, 2000);
       } else {
         showStatus('저장 실패: ' + (res.error || ''), 'err');
-        btn.disabled = false;
-        btn.textContent = 'DB에 저장';
+        btn.disabled = false; btn.textContent = 'DB에 저장';
       }
     })
     .catch(function() {
-      showStatus('저장 중 오류가 발생했습니다.', 'err');
-      btn.disabled = false;
-      btn.textContent = 'DB에 저장';
+      showStatus('저장 중 오류.', 'err');
+      btn.disabled = false; btn.textContent = 'DB에 저장';
     });
 });
+
+// 활성 행 표시
+function setActive(slug) {
+  document.querySelectorAll('.fighter-row').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.slug === slug);
+  });
+}
 
 // 목록 로드
 function loadFighters() {
   fetch('/api/ufc-fighters')
     .then(function(r) { return r.json(); })
     .then(function(rows) {
+      _savedData = {};
+      rows.forEach(function(f) { _savedData[f.slug] = f; });
+
       var el = document.getElementById('fighterListBody');
-      if (!rows.length) { el.innerHTML = '<div style="color:#aaa;font-size:13px;padding:8px 0;">저장된 선수 없음</div>'; return; }
+      if (!rows.length) {
+        el.innerHTML = '<div style="color:#aaa;font-size:13px;padding:8px 0;">저장된 선수 없음</div>';
+        return;
+      }
       el.innerHTML = rows.map(function(f) {
         var date = new Date(f.fetched_at).toLocaleDateString('ko-KR');
-        return '<div class="fighter-row">' +
-          '<div><div class="fname">' + f.name.toUpperCase() + '</div>' +
-          '<div class="fmeta">' + (f.weight_class || '—') + ' · ' + f.total_wins + 'W ' + f.total_losses + 'L</div></div>' +
-          '<div class="fmeta">' + date + '</div>' +
-          '</div>';
+        return '<div class="fighter-row" data-slug="' + f.slug + '">' +
+          '<div onclick="openSaved(\'' + f.slug + '\')" style="flex:1;">' +
+            '<div class="fname">' + f.name.toUpperCase() + '</div>' +
+            '<div class="fmeta">' + (f.weight_class || '—') + ' · ' + f.total_wins + 'W ' + f.total_losses + 'L · ' + date + '</div>' +
+          '</div>' +
+          '<div class="row-actions">' +
+            '<button class="btn-del" onclick="deleteFighter(event,\'' + f.slug + '\',\'' + f.name + '\')">삭제</button>' +
+          '</div>' +
+        '</div>';
       }).join('');
+    });
+}
+
+// 저장된 선수 보기
+function openSaved(slug) {
+  var f = _savedData[slug];
+  if (!f) return;
+  _current = null;
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('status').style.display = 'none';
+  fillStats(f);
+  setActive(slug);
+}
+
+// 삭제
+function deleteFighter(e, slug, name) {
+  e.stopPropagation();
+  if (!confirm(name + ' 삭제할까요?')) return;
+  fetch('/api/ufc-fighters/' + slug, { method:'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.ok) {
+        // 현재 표시 중이면 패널 닫기
+        if (document.querySelector('.fighter-row.active[data-slug="' + slug + '"]')) {
+          document.getElementById('resultPanel').style.display = 'none';
+        }
+        loadFighters();
+      }
     });
 }
 
