@@ -29,13 +29,14 @@ async function fetchUFCFighter(slug: string): Promise<string> {
 }
 
 // 3bar 섹션에서 횟수·퍼센트 추출
+// 실제 HTML 형식: c-stat-3bar__value">1012 (65%)  — 같은 element에 count(pct) 형태
 function extract3bar(html: string, sectionTitle: string): { count: number; pct: number }[] {
   const escaped = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const section = html.match(new RegExp(escaped + '[\\s\\S]*?(?=<h2|</section|$)', 'i'))
+  // 섹션 제목은 c-stat-3bar__title 클래스에 있고, 다음 c-stat-3bar__title 또는 끝까지가 범위
+  const section = html.match(new RegExp(escaped + '[\\s\\S]*?(?=c-stat-3bar__title|$)', 'i'))
   if (!section) return []
-  const counts = [...section[0].matchAll(/c-stat-3bar__value[^"]*"[^>]*>\s*(\d+)/g)].map(m => parseInt(m[1]))
-  const pcts   = [...section[0].matchAll(/c-stat-3bar__percent[^"]*"[^>]*>\s*(\d+)/g)].map(m => parseInt(m[1]))
-  return counts.map((c, i) => ({ count: c, pct: pcts[i] ?? 0 }))
+  return [...section[0].matchAll(/c-stat-3bar__value">\s*(\d+)\s*\((\d+)%\)/g)]
+    .map(m => ({ count: parseInt(m[1]), pct: parseInt(m[2]) }))
 }
 
 function parseStats(html: string, slug: string) {
@@ -93,11 +94,10 @@ function parseStats(html: string, slug: string) {
   const posClinch   = posBars[1] ?? { count: 0, pct: 0 }
   const posGround   = posBars[2] ?? { count: 0, pct: 0 }
 
-  // 7. 표적 별 중요 타격 (Head / Body / Leg)
-  const tgtBars = extract3bar(html, '시그. Str. 표적에 의해')
-  const tgtHead = tgtBars[0] ?? { count: 0, pct: 0 }
-  const tgtBody = tgtBars[1] ?? { count: 0, pct: 0 }
-  const tgtLeg  = tgtBars[2] ?? { count: 0, pct: 0 }
+  // 7. 표적 별 중요 타격 — JS 렌더링 데이터라 서버사이드 fetch로 불가, null 처리
+  const tgtHead = { count: 0, pct: 0 }
+  const tgtBody = { count: 0, pct: 0 }
+  const tgtLeg  = { count: 0, pct: 0 }
 
   const raw: RawStats = {
     strikePerMin,

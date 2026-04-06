@@ -14,9 +14,6 @@ export async function GET() {
              pos_standing_count, pos_standing_pct,
              pos_clinch_count, pos_clinch_pct,
              pos_ground_count, pos_ground_pct,
-             tgt_head_count, tgt_head_pct,
-             tgt_body_count, tgt_body_pct,
-             tgt_leg_count, tgt_leg_pct,
              fetched_at
       FROM ufc_fighters
       ORDER BY fetched_at DESC
@@ -49,9 +46,6 @@ export async function POST(req: NextRequest) {
         pos_standing_count, pos_standing_pct,
         pos_clinch_count,   pos_clinch_pct,
         pos_ground_count,   pos_ground_pct,
-        tgt_head_count,     tgt_head_pct,
-        tgt_body_count,     tgt_body_pct,
-        tgt_leg_count,      tgt_leg_pct,
         fetched_at
       ) VALUES (
         ${b.slug}, ${b.name}, ${b.weight_class ?? null},
@@ -66,9 +60,6 @@ export async function POST(req: NextRequest) {
         ${b.pos_standing_count ?? 0}, ${b.pos_standing_pct ?? 0},
         ${b.pos_clinch_count ?? 0},   ${b.pos_clinch_pct ?? 0},
         ${b.pos_ground_count ?? 0},   ${b.pos_ground_pct ?? 0},
-        ${b.tgt_head_count ?? 0},     ${b.tgt_head_pct ?? 0},
-        ${b.tgt_body_count ?? 0},     ${b.tgt_body_pct ?? 0},
-        ${b.tgt_leg_count ?? 0},      ${b.tgt_leg_pct ?? 0},
         NOW()
       )
       ON CONFLICT (slug) DO UPDATE SET
@@ -98,12 +89,6 @@ export async function POST(req: NextRequest) {
         pos_clinch_pct     = EXCLUDED.pos_clinch_pct,
         pos_ground_count   = EXCLUDED.pos_ground_count,
         pos_ground_pct     = EXCLUDED.pos_ground_pct,
-        tgt_head_count    = EXCLUDED.tgt_head_count,
-        tgt_head_pct      = EXCLUDED.tgt_head_pct,
-        tgt_body_count    = EXCLUDED.tgt_body_count,
-        tgt_body_pct      = EXCLUDED.tgt_body_pct,
-        tgt_leg_count     = EXCLUDED.tgt_leg_count,
-        tgt_leg_pct       = EXCLUDED.tgt_leg_pct,
         fetched_at        = EXCLUDED.fetched_at
     `
     return NextResponse.json({ ok: true })

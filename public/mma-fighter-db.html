@@ -213,15 +213,6 @@ input[type=text]:focus { border-color:#d4001a; }
     </tbody>
   </table>
 
-  <div class="stat-section-title">표적 별 중요 타격</div>
-  <table class="stat-table">
-    <thead><tr><th>표적</th><th>횟수</th><th>비율</th></tr></thead>
-    <tbody>
-      <tr><td>머리</td><td id="s_tgt_head_count">—</td><td id="s_tgt_head_pct">—</td></tr>
-      <tr><td>몸통</td><td id="s_tgt_body_count">—</td><td id="s_tgt_body_pct">—</td></tr>
-      <tr><td>다리</td><td id="s_tgt_leg_count">—</td><td id="s_tgt_leg_pct">—</td></tr>
-    </tbody>
-  </table>
 </div>
 
 <button class="btn-save" id="saveBtn" style="display:none;">DB에 저장</button>
@@ -281,12 +272,6 @@ function fillStats(d) {
   document.getElementById('s_pos_ground_count').textContent   = pos.posGround.count;
   document.getElementById('s_pos_ground_pct').textContent     = pos.posGround.pct + '%';
 
-  document.getElementById('s_tgt_head_count').textContent = tgt.tgtHead.count;
-  document.getElementById('s_tgt_head_pct').textContent   = tgt.tgtHead.pct + '%';
-  document.getElementById('s_tgt_body_count').textContent = tgt.tgtBody.count;
-  document.getElementById('s_tgt_body_pct').textContent   = tgt.tgtBody.pct + '%';
-  document.getElementById('s_tgt_leg_count').textContent  = tgt.tgtLeg.count;
-  document.getElementById('s_tgt_leg_pct').textContent    = tgt.tgtLeg.pct + '%';
 }
 
 // 검색
@@ -357,12 +342,6 @@ document.getElementById('saveBtn').addEventListener('click', function() {
     pos_clinch_pct:     pos.posClinch.pct,
     pos_ground_count:   pos.posGround.count,
     pos_ground_pct:     pos.posGround.pct,
-    tgt_head_count:    tgt.tgtHead.count,
-    tgt_head_pct:      tgt.tgtHead.pct,
-    tgt_body_count:    tgt.tgtBody.count,
-    tgt_body_pct:      tgt.tgtBody.pct,
-    tgt_leg_count:     tgt.tgtLeg.count,
-    tgt_leg_pct:       tgt.tgtLeg.pct,
   };
 
   fetch('/api/ufc-fighters', {
