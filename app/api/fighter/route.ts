@@ -28,20 +28,29 @@ async function fetchUFCFighter(slug: string): Promise<string> {
   return res.text()
 }
 
-function parseStats(html: string, slug: string): { raw: RawStats; weightClass: string } {
-  // 1. 전적: "28-1-0 (W-L-D)" — 없으면 선수 페이지가 아님
+// 3bar 섹션에서 횟수·퍼센트 추출
+function extract3bar(html: string, sectionTitle: string): { count: number; pct: number }[] {
+  const escaped = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const section = html.match(new RegExp(escaped + '[\\s\\S]*?(?=<h2|</section|$)', 'i'))
+  if (!section) return []
+  const counts = [...section[0].matchAll(/c-stat-3bar__value[^"]*"[^>]*>\s*(\d+)/g)].map(m => parseInt(m[1]))
+  const pcts   = [...section[0].matchAll(/c-stat-3bar__percent[^"]*"[^>]*>\s*(\d+)/g)].map(m => parseInt(m[1]))
+  return counts.map((c, i) => ({ count: c, pct: pcts[i] ?? 0 }))
+}
+
+function parseStats(html: string, slug: string) {
+  // 1. 전적
   const recordMatch = html.match(/(\d+)-(\d+)-\d+\s*\(W-L-D\)/)
   if (!recordMatch) throw new Error('FIGHTER_NOT_FOUND')
   let totalWins   = parseInt(recordMatch[1])
   let totalLosses = parseInt(recordMatch[2])
 
-  // Jones의 1패는 반칙패 — 현행 규정상 승리로 처리
   if (slug === 'jon-jones' && totalLosses === 1) {
     totalWins += 1
     totalLosses = 0
   }
 
-  // 2. Win by Method 섹션에서 KO/Dec/Sub 순서로 추출
+  // 2. Win by Method
   const winSection = html.match(/Win by Method([\s\S]*?)(?=<h2|<\/section|$)/i)
   const winBarVals = winSection
     ? [...winSection[1].matchAll(/c-stat-3bar__value">\s*(\d+)/g)]
@@ -50,25 +59,25 @@ function parseStats(html: string, slug: string): { raw: RawStats; weightClass: s
   const decWins = parseInt(winBarVals[1]?.[1] ?? '0')
   const subWins = parseInt(winBarVals[2]?.[1] ?? '0')
 
-  // 3. c-stat-compare__number — 페이지 순서: SLpM, SApM, TD avg, Sub avg, Str Def%, TD Def%, KD avg, Avg time
+  // 3. c-stat-compare__number
   const compareNums = [...html.matchAll(/<div class="c-stat-compare__number">\s*([\d.:]+)/g)]
     .map(m => m[1].trim())
   const strikePerMin    = parseFloat(compareNums[0] ?? '0')
   const allowedPerMin   = parseFloat(compareNums[1] ?? '0')
   const tdPer15   = parseFloat(compareNums[2] ?? '0')
   const subsPer15 = parseFloat(compareNums[3] ?? '0')
-  const strDefInt = parseFloat(compareNums[4] ?? '0')  // 정수 e.g. 62
-  const tdDefInt  = parseFloat(compareNums[5] ?? '0')  // 정수 e.g. 91
+  const strDefInt = parseFloat(compareNums[4] ?? '0')
+  const tdDefInt  = parseFloat(compareNums[5] ?? '0')
   const kdAvg      = parseFloat(compareNums[6] ?? '0')
   const avgFightStr = compareNums[7] ?? '0:00'
 
-  // 4. 원형 퍼센트: 타격 정확도, 테이크다운 정확도
+  // 4. 원형 퍼센트
   const circlePercs = [...html.matchAll(/<text[^>]*class="e-chart-circle__percent"[^>]*>(\d+)%<\/text>/g)]
     .map(m => parseInt(m[1]))
   const strAcc = (circlePercs[0] ?? 0) / 100
   const tdAcc  = (circlePercs[1] ?? 0) / 100
 
-  // 5. 체급 (Light Heavyweight를 Lightweight보다 먼저 체크)
+  // 5. 체급
   let weightClass = 'Unknown'
   const htmlLower = html.toLowerCase()
   for (const wc of WEIGHT_CLASSES) {
@@ -77,6 +86,18 @@ function parseStats(html: string, slug: string): { raw: RawStats; weightClass: s
       break
     }
   }
+
+  // 6. 포지션 별 중요 타격 (Standing / Clinch / Ground)
+  const posBars = extract3bar(html, '포지션 별 중요 타격')
+  const posStanding = posBars[0] ?? { count: 0, pct: 0 }
+  const posClinch   = posBars[1] ?? { count: 0, pct: 0 }
+  const posGround   = posBars[2] ?? { count: 0, pct: 0 }
+
+  // 7. 표적 별 중요 타격 (Head / Body / Leg)
+  const tgtBars = extract3bar(html, '시그. Str. 표적에 의해')
+  const tgtHead = tgtBars[0] ?? { count: 0, pct: 0 }
+  const tgtBody = tgtBars[1] ?? { count: 0, pct: 0 }
+  const tgtLeg  = tgtBars[2] ?? { count: 0, pct: 0 }
 
   const raw: RawStats = {
     strikePerMin,
@@ -93,14 +114,18 @@ function parseStats(html: string, slug: string): { raw: RawStats; weightClass: s
     sub_wins:          subWins,
     dec_wins:          decWins,
     total_wins:        totalWins,
-    ko_losses:         0,  // UFC 페이지에서 패배 방식 미제공
+    ko_losses:         0,
     sub_losses:        0,
     dec_losses:        0,
     total_losses:      totalLosses,
   }
 
-  return { raw, weightClass }
+  const position = { posStanding, posClinch, posGround }
+  const target   = { tgtHead, tgtBody, tgtLeg }
+
+  return { raw, weightClass, position, target }
 }
+
 
 export async function GET(req: NextRequest) {
   const name = req.nextUrl.searchParams.get('name')
@@ -112,10 +137,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const html = await fetchUFCFighter(slug)
-    const { raw, weightClass } = parseStats(html, slug)
+    const { raw, weightClass, position, target } = parseStats(html, slug)
     const scores = calcScores(raw)
 
-    return NextResponse.json({ slug, weightClass, raw, scores })
+    return NextResponse.json({ slug, weightClass, raw, scores, position, target })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ''
     if (msg === 'FIGHTER_NOT_FOUND') {

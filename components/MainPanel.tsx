@@ -44,6 +44,9 @@ export default function MainPanel() {
             <a href="/mma-predict.html" className="notify-btn notify-btn-nav">
               MMA 승자 예측
             </a>
+            <a href="/mma-fighter-db.html" className="notify-btn notify-btn-nav">
+              Fighter DB
+            </a>
           </section>
 
           <section className="notify-section">
