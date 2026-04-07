@@ -51,14 +51,22 @@ function parseStats(html: string, slug: string) {
     totalLosses = 0
   }
 
-  // 2. Win by Method
-  const winSection = html.match(/Win by Method([\s\S]*?)(?=<h2|<\/section|$)/i)
-  const winBarVals = winSection
-    ? [...winSection[1].matchAll(/c-stat-3bar__value">\s*(\d+)/g)]
-    : []
-  const koWins  = parseInt(winBarVals[0]?.[1] ?? '0')
-  const decWins = parseInt(winBarVals[1]?.[1] ?? '0')
-  const subWins = parseInt(winBarVals[2]?.[1] ?? '0')
+  // 2. Win by Method — 한국어/영어 타이틀 순서로 시도, 모두 실패 시 포지션 섹션 앞의 첫 3개 추출
+  let winBars = extract3bar(html, '승리 방법')
+  if (winBars.length === 0) winBars = extract3bar(html, '방법별 승리')
+  if (winBars.length === 0) winBars = extract3bar(html, 'Win by Method')
+  if (winBars.length === 0) {
+    const posIdx = html.indexOf('포지션 별 중요 타격')
+    const beforePos = posIdx > 0 ? html.slice(0, posIdx) : html
+    winBars = [...beforePos.matchAll(/c-stat-3bar__value">\s*(\d+)\s*\((\d+)%\)/g)]
+      .map(m => ({ count: parseInt(m[1]), pct: parseInt(m[2]) }))
+  }
+  const koBar  = winBars[0] ?? { count: 0, pct: 0 }
+  const decBar = winBars[1] ?? { count: 0, pct: 0 }
+  const subBar = winBars[2] ?? { count: 0, pct: 0 }
+  const koWins  = koBar.count
+  const decWins = decBar.count
+  const subWins = subBar.count
 
   // 3. c-stat-compare__number
   const compareNums = [...html.matchAll(/<div class="c-stat-compare__number">\s*([\d.:]+)/g)]
@@ -120,10 +128,11 @@ function parseStats(html: string, slug: string) {
     total_losses:      totalLosses,
   }
 
-  const position = { posStanding, posClinch, posGround }
-  const target   = { tgtHead, tgtBody, tgtLeg }
+  const position  = { posStanding, posClinch, posGround }
+  const target    = { tgtHead, tgtBody, tgtLeg }
+  const winMethod = { koBar, decBar, subBar }
 
-  return { raw, weightClass, position, target }
+  return { raw, weightClass, position, target, winMethod }
 }
 
 
@@ -137,10 +146,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const html = await fetchUFCFighter(slug)
-    const { raw, weightClass, position, target } = parseStats(html, slug)
+    const { raw, weightClass, position, target, winMethod } = parseStats(html, slug)
     const scores = calcScores(raw)
 
-    return NextResponse.json({ slug, weightClass, raw, scores, position, target })
+    return NextResponse.json({ slug, weightClass, raw, scores, position, target, winMethod })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ''
     if (msg === 'FIGHTER_NOT_FOUND') {

@@ -299,9 +299,10 @@ function fillStats(d) {
     var r = d.raw, pos = d.position;
     document.getElementById('s_total_wins').textContent   = r.total_wins;
     document.getElementById('s_total_losses').textContent = r.total_losses;
-    document.getElementById('s_ko_wins').textContent      = r.ko_wins;
-    document.getElementById('s_sub_wins').textContent     = r.sub_wins;
-    document.getElementById('s_dec_wins').textContent     = r.dec_wins;
+    var wm = d.winMethod;
+    document.getElementById('s_ko_wins').textContent      = r.ko_wins  + (wm ? ' (' + wm.koBar.pct  + '%)' : '');
+    document.getElementById('s_sub_wins').textContent     = r.sub_wins + (wm ? ' (' + wm.subBar.pct + '%)' : '');
+    document.getElementById('s_dec_wins').textContent     = r.dec_wins + (wm ? ' (' + wm.decBar.pct + '%)' : '');
     document.getElementById('s_strike_per_min').textContent   = fix2(r.strikePerMin);
     document.getElementById('s_allowed_per_min').textContent  = fix2(r.allowedPerMin);
     document.getElementById('s_striking_accuracy').textContent = pct(r.striking_accuracy);
@@ -322,9 +323,9 @@ function fillStats(d) {
     // DB row: flat 구조
     document.getElementById('s_total_wins').textContent   = d.total_wins;
     document.getElementById('s_total_losses').textContent = d.total_losses;
-    document.getElementById('s_ko_wins').textContent      = d.ko_wins;
-    document.getElementById('s_sub_wins').textContent     = d.sub_wins;
-    document.getElementById('s_dec_wins').textContent     = d.dec_wins;
+    document.getElementById('s_ko_wins').textContent      = d.ko_wins  + (d.ko_wins_pct  ? ' (' + d.ko_wins_pct  + '%)' : '');
+    document.getElementById('s_sub_wins').textContent     = d.sub_wins + (d.sub_wins_pct ? ' (' + d.sub_wins_pct + '%)' : '');
+    document.getElementById('s_dec_wins').textContent     = d.dec_wins + (d.dec_wins_pct ? ' (' + d.dec_wins_pct + '%)' : '');
     document.getElementById('s_strike_per_min').textContent   = fix2(d.strike_per_min);
     document.getElementById('s_allowed_per_min').textContent  = fix2(d.allowed_per_min);
     document.getElementById('s_striking_accuracy').textContent = pct(d.striking_accuracy);
@@ -385,6 +386,9 @@ document.getElementById('saveBtn').addEventListener('click', function() {
     slug: _current.slug, name: _current._name, weight_class: _current.weightClass,
     total_wins: r.total_wins, total_losses: r.total_losses,
     ko_wins: r.ko_wins, sub_wins: r.sub_wins, dec_wins: r.dec_wins,
+    ko_wins_pct: _current.winMethod ? _current.winMethod.koBar.pct  : 0,
+    dec_wins_pct: _current.winMethod ? _current.winMethod.decBar.pct : 0,
+    sub_wins_pct: _current.winMethod ? _current.winMethod.subBar.pct : 0,
     ko_losses: r.ko_losses, sub_losses: r.sub_losses, dec_losses: r.dec_losses,
     strike_per_min: r.strikePerMin, allowed_per_min: r.allowedPerMin,
     striking_accuracy: r.striking_accuracy, striking_defense: r.striking_defense,

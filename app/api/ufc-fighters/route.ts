@@ -7,6 +7,7 @@ export async function GET() {
     const rows = await sql`
       SELECT slug, name, weight_class,
              total_wins, total_losses, ko_wins, sub_wins, dec_wins,
+             ko_wins_pct, dec_wins_pct, sub_wins_pct,
              strike_per_min, allowed_per_min,
              striking_accuracy, striking_defense,
              takedown_accuracy, takedown_defense,
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
       INSERT INTO ufc_fighters (
         slug, name, weight_class,
         total_wins, total_losses, ko_wins, sub_wins, dec_wins,
+        ko_wins_pct, dec_wins_pct, sub_wins_pct,
         ko_losses, sub_losses, dec_losses,
         strike_per_min, allowed_per_min,
         striking_accuracy, striking_defense,
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
         ${b.slug}, ${b.name}, ${b.weight_class ?? null},
         ${b.total_wins ?? 0}, ${b.total_losses ?? 0},
         ${b.ko_wins ?? 0}, ${b.sub_wins ?? 0}, ${b.dec_wins ?? 0},
+        ${b.ko_wins_pct ?? 0}, ${b.dec_wins_pct ?? 0}, ${b.sub_wins_pct ?? 0},
         ${b.ko_losses ?? 0}, ${b.sub_losses ?? 0}, ${b.dec_losses ?? 0},
         ${b.strike_per_min ?? 0}, ${b.allowed_per_min ?? 0},
         ${b.striking_accuracy ?? 0}, ${b.striking_defense ?? 0},
@@ -70,6 +73,9 @@ export async function POST(req: NextRequest) {
         ko_wins           = EXCLUDED.ko_wins,
         sub_wins          = EXCLUDED.sub_wins,
         dec_wins          = EXCLUDED.dec_wins,
+        ko_wins_pct       = EXCLUDED.ko_wins_pct,
+        dec_wins_pct      = EXCLUDED.dec_wins_pct,
+        sub_wins_pct      = EXCLUDED.sub_wins_pct,
         ko_losses         = EXCLUDED.ko_losses,
         sub_losses        = EXCLUDED.sub_losses,
         dec_losses        = EXCLUDED.dec_losses,
