@@ -41,16 +41,46 @@ function toScore(n: number): number {
 export function calcScores(s: RawStats): Scores {
   const totalFights = s.total_wins + s.total_losses
 
-  // Power: KO효율(kd_avg/SLpM) × KO승률 + 타격정확도
-  // 기준: Holloway=4 (raw 0.3283), Chandler=7 (raw 0.5646)
+  // Power: KO승률 + kd_avg 기반 티어 계산
   const koRate = s.total_wins > 0 ? s.ko_wins / s.total_wins : 0
-  const slpmNorm = normalize(s.strikePerMin, 1.5, 7.0)
-  const kdEff = s.kd_avg > 0
-    ? Math.min(s.kd_avg / Math.max(slpmNorm, 0.01), 0.8)
-    : 0.5  // kd_avg 미제공 시 중립값
-  const powerRaw = koRate * kdEff + s.striking_accuracy * 0.364
-  const powerMapped = (powerRaw - 0.3283) / (0.5646 - 0.3283) * 3 + 4
-  const power = Math.min(10, Math.max(1, Math.round(powerMapped)))
+  const hasKo  = s.total_wins > 0
+  const kd     = s.kd_avg
+  const hasKd  = kd > 0
+
+  // 각 지표를 1-9 점수로 변환
+  const koScore = (r: number): number => {
+    if (r >= 0.8)  return 9
+    if (r >= 0.4)  return 5 + Math.round((r - 0.4) / (0.8 - 0.4) * 3)  // 5~8
+    if (r >  0.2)  return 3 + Math.round((r - 0.2) / (0.4 - 0.2))       // 3~4
+    return 2
+  }
+  const kdScore = (k: number): number => {
+    if (k >= 1.2)  return 9
+    if (k >= 0.35) return 5 + Math.round((k - 0.35) / (1.2 - 0.35) * 3) // 5~8
+    if (k >  0.2)  return 3 + Math.round((k - 0.2)  / (0.35 - 0.2))     // 3~4
+    return 2
+  }
+
+  // 1차: 둘 중 높은 점수 기준
+  let power: number
+  if (hasKo && hasKd)       power = Math.max(koScore(koRate), kdScore(kd))
+  else if (hasKo)            power = koScore(koRate)
+  else if (hasKd)            power = kdScore(kd)
+  else                       power = 5
+
+  // 10점: 9점 달성 + 나머지 지표가 기준값의 65% 이상
+  if (power === 9) {
+    if (hasKo && koRate >= 0.8 && hasKd && kd  >= koRate * 0.65) power = 10
+    else if (hasKd && kd >= 1.2 && hasKo && koRate >= kd * 0.65) power = 10
+  }
+
+  // 1점: 2점 달성 + 나머지 지표가 기준값의 65% 이하
+  if (power === 2) {
+    if (hasKo && koRate <= 0.2 && hasKd && kd  <= koRate * 0.65) power = 1
+    else if (hasKd && kd <= 0.2 && hasKo && koRate <= kd * 0.65) power = 1
+  }
+
+  power = Math.min(10, Math.max(1, power))
 
   // 타격성공: 타격정확도 × 0.6 + strikePerMin정규화 × 0.4
   const strikingOffense =
