@@ -496,69 +496,22 @@ body {
 .radar-legend-b { color:#0055d4; }
 /* ===== 우측 사이드 네비게이션 ===== */
 .side-nav {
-  position:fixed;
-  right:0;
-  top:50%;
-  transform:translateY(-50%);
-  display:flex;
-  flex-direction:column;
-  background:rgba(18,18,18,0.96);
-  border-radius:6px 0 0 6px;
-  overflow:hidden;
-  z-index:200;
-  box-shadow:-3px 0 18px rgba(0,0,0,0.3);
+  position:fixed;right:0;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;
+  background:#fff;
+  border-radius:6px 0 0 6px;overflow:hidden;z-index:200;
+  box-shadow:-2px 0 12px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.07);
 }
 .side-nav a {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:13px 8px;
-  font-family:'Bebas Neue',sans-serif;
-  font-size:8px;
-  letter-spacing:1.5px;
-  color:#444;
-  text-decoration:none;
-  gap:5px;
-  min-width:46px;
-  border-left:2px solid transparent;
-  transition:color 0.15s, background 0.15s;
-  line-height:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:13px 8px;font-family:'Bebas Neue',sans-serif;font-size:8px;
+  letter-spacing:1.5px;color:#666;text-decoration:none;gap:5px;min-width:46px;
+  border-left:2px solid transparent;transition:color 0.15s,background 0.15s;line-height:1;
 }
-.side-nav a:hover { color:#bbb; background:rgba(255,255,255,0.04); }
-.side-nav a.active { color:#d4001a; border-left-color:#d4001a; background:rgba(212,0,26,0.07); }
-.side-nav-sep { height:1px; background:rgba(255,255,255,0.05); }
-.side-nav-icon { font-size:15px; line-height:1; }
-@media (max-width: 600px) { .side-nav { display:none; } }
-/* ===== 모바일 드롭다운 네비 ===== */
-.mob-nav-btn {
-  display:none;
-  position:fixed;top:12px;right:12px;z-index:300;
-  background:rgba(18,18,18,0.92);border:none;border-radius:5px;
-  color:#888;font-size:20px;width:36px;height:36px;
-  align-items:center;justify-content:center;cursor:pointer;
-  box-shadow:0 2px 10px rgba(0,0,0,0.3);
-}
-.mob-nav-btn:hover { color:#d4001a; }
-.mob-nav-dropdown {
-  display:none;position:fixed;top:54px;right:12px;z-index:300;
-  background:rgba(18,18,18,0.97);border-radius:6px;overflow:hidden;
-  box-shadow:0 4px 20px rgba(0,0,0,0.4);min-width:120px;
-}
-.mob-nav-dropdown a {
-  display:flex;align-items:center;gap:8px;
-  padding:11px 16px;font-family:'Bebas Neue',sans-serif;
-  font-size:13px;letter-spacing:2px;color:#666;text-decoration:none;
-  transition:color 0.15s,background 0.15s;
-  border-left:2px solid transparent;
-}
-.mob-nav-dropdown a:hover { color:#bbb;background:rgba(255,255,255,0.04); }
-.mob-nav-dropdown a.active { color:#d4001a;border-left-color:#d4001a;background:rgba(212,0,26,0.07); }
-.mob-nav-sep { height:1px;background:rgba(255,255,255,0.06); }
-@media (max-width: 600px) {
-  .mob-nav-btn { display:flex; }
-  .mob-nav-dropdown.open { display:block; }
-}
+.side-nav a:hover { color:#1a1a1a;background:rgba(0,0,0,0.04); }
+.side-nav a.active { color:#d4001a;border-left-color:#d4001a;background:rgba(212,0,26,0.07); }
+.side-nav-sep { height:1px;background:rgba(0,0,0,0.08); }
+.side-nav-icon { font-size:15px;line-height:1; }
 
 /* ===== 전체화면 스캔라인 오버레이 ===== */
 #fullScanOverlay {
@@ -826,24 +779,9 @@ body {
   <div class="side-nav-sep"></div>
   <a href="/mma-stat.html"><span class="side-nav-icon">◈</span>STAT</a>
   <a href="/mma-predict.html" class="active"><span class="side-nav-icon">⚔</span>PREDICT</a>
+  <a href="/mma-fighter-db.html"><span class="side-nav-icon">🗂</span>DB</a>
   <a href="/mma-anim-demo.html"><span class="side-nav-icon">▶</span>DEMO</a>
 </nav>
-
-<button class="mob-nav-btn" id="mobNavBtn" aria-label="메뉴">&#9776;</button>
-<nav class="mob-nav-dropdown" id="mobNavDropdown">
-  <a href="/">⌂ HOME</a>
-  <div class="mob-nav-sep"></div>
-  <a href="/mma-stat.html">◈ STAT</a>
-  <a href="/mma-predict.html" class="active">⚔ PREDICT</a>
-  <a href="/mma-anim-demo.html">▶ DEMO</a>
-</nav>
-<script>
-(function(){
-  var btn=document.getElementById('mobNavBtn');
-  var dd=document.getElementById('mobNavDropdown');
-  btn.addEventListener('click',function(e){e.stopPropagation();dd.classList.toggle('open');});
-  document.addEventListener('click',function(){dd.classList.remove('open');});
-})();
 </script>
 
 <div class="top-bar">

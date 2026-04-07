@@ -26,6 +26,17 @@ export async function GET() {
   }
 }
 
+export async function DELETE() {
+  const sql = getSql()
+  try {
+    await sql`DELETE FROM ufc_fighters`
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    console.error('[ufc-fighters DELETE ALL]', e)
+    return NextResponse.json({ error: 'DB error' }, { status: 500 })
+  }
+}
+
 export async function POST(req: NextRequest) {
   const sql = getSql()
   try {
