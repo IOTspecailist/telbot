@@ -453,8 +453,11 @@ document.getElementById('searchBtn').addEventListener('click', function() {
     .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
       if (!res.ok) {
-        status.style.display = 'none';
-        alert(res.data.error || '선수를 찾을 수 없습니다. 이름을 확인해주세요.');
+        status.className = 'search-status error';
+        status.innerHTML = res.data.notInDb
+          ? '❌ DB에 없는 선수입니다 — <a href="/mma-fighter-db.html" style="color:#d4001a;">Fighter DB</a>에서 먼저 저장해주세요.'
+          : (res.data.error || '오류가 발생했습니다.');
+        status.style.display = 'block';
         return;
       }
       var d = res.data;
@@ -482,11 +485,13 @@ document.getElementById('searchBtn').addEventListener('click', function() {
       document.getElementById('confirmPanel').style.display = 'block';
       status.className = 'search-status';
       status.textContent = '✓ 데이터 로드 완료 — 체급 확인 후 카드 생성';
+      status.style.display = 'block';
       redraw();
     })
     .catch(function() {
-      status.style.display = 'none';
-      alert('오류가 발생했습니다. 다시 시도해주세요.');
+      status.className = 'search-status error';
+      status.textContent = '네트워크 오류가 발생했습니다. 다시 시도해주세요.';
+      status.style.display = 'block';
     })
     .finally(function() {
       btn.disabled = false;
