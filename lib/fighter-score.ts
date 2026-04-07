@@ -109,27 +109,51 @@ export function calcScores(s: RawStats): Scores {
   const grapplingVol = normalize(s.avg_fight_min * (s.td_per_15 / 15), 0, 8)
   const cardio = Math.max(strikingVol, grapplingVol)
 
-  // Fight IQ: 9개 스탯 기반 + 경험 가중치, 선형 매핑
-  // base = (승률×2 + SLpM + StrAcc + StrDef + TDAcc + TDavg + TDDef + Subavg − SApM) / 9
-  const winRate = totalFights > 0 ? s.total_wins / totalFights : 0
-  const fiqBase = (
-    winRate * 2 +
-    normalize(s.strikePerMin, 1.5, 7.0) +
-    s.striking_accuracy +
-    s.striking_defense +
-    s.takedown_accuracy +
-    normalize(s.td_per_15, 0, 6) +
-    s.takedown_defense +
-    normalize(s.subs_per_15, 0, 1.5) -
-    normalize(s.allowedPerMin, 1.5, 7.0)
-  ) / 9
-  // 경험 가중치: winRate ≥ 85%, 10/15/20/25/30승 티어당 +0.025
-  const fiqBonus = winRate >= 0.85
-    ? [10, 15, 20, 25, 30].filter(t => s.total_wins >= t).length * 0.025
-    : 0
-  // 선형 매핑: Jones 29-0 → 10 (anchor 0.7279), Chandler 23-10 → 3 (anchor 0.4407)
-  const fiqMapped = (fiqBase + fiqBonus - 0.4407) / (0.7279 - 0.4407) * 7 + 3
-  const fightiq = Math.min(10, Math.max(1, Math.round(fiqMapped)))
+  // Fight IQ: 방어 핵심 2개 + 허용타격 + 경기운영 기반 티어 점수표
+  const fiqSd  = (() => {
+    const v = s.striking_defense
+    if (v >= 0.64) return 10; if (v >= 0.60) return 9; if (v >= 0.57) return 8
+    if (v >= 0.54) return 7;  if (v >= 0.51) return 6; if (v >= 0.48) return 5
+    if (v >= 0.45) return 4;  if (v >= 0.42) return 3; if (v >= 0.39) return 2
+    return 1
+  })()
+  const fiqTd  = (() => {
+    const v = s.takedown_defense
+    if (v >= 0.93) return 10; if (v >= 0.88) return 9; if (v >= 0.83) return 8
+    if (v >= 0.78) return 7;  if (v >= 0.73) return 6; if (v >= 0.68) return 5
+    if (v >= 0.63) return 4;  if (v >= 0.58) return 3; if (v >= 0.53) return 2
+    return 1
+  })()
+  const fiqApm = (() => {
+    const v = s.allowedPerMin
+    if (v <= 2.00) return 10; if (v <= 2.50) return 9; if (v <= 3.00) return 8
+    if (v <= 3.50) return 7;  if (v <= 4.00) return 6; if (v <= 4.50) return 5
+    if (v <= 5.00) return 4;  if (v <= 5.50) return 3; if (v <= 6.50) return 2
+    return 1
+  })()
+  const fiqAfm = (() => {
+    const v = s.avg_fight_min
+    if (v >= 15.0) return 10; if (v >= 14.0) return 9; if (v >= 13.0) return 8
+    if (v >= 12.0) return 7;  if (v >= 11.0) return 6; if (v >= 10.0) return 5
+    if (v >= 9.0)  return 4;  if (v >= 8.0)  return 3; if (v >= 7.0)  return 2
+    return 1
+  })()
+
+  const fiqBase = fiqSd * 0.30 + fiqTd * 0.35 + fiqApm * 0.20 + fiqAfm * 0.15
+
+  // 상위권 보너스
+  let fiqElite = 0
+  if (fiqSd >= 9 || fiqTd >= 9) {
+    const otherOk = (fiqSd >= 9 && fiqTd >= 9) ? true : fiqSd >= 9 ? fiqTd >= 8 : fiqSd >= 8
+    if (otherOk && (fiqApm >= 8 || fiqAfm >= 8)) fiqElite = 1
+  }
+
+  // 하위권 감점
+  let fiqPenalty = 0
+  if ((fiqSd <= 2 || fiqTd <= 2) && fiqSd <= 2 && fiqTd <= 2 && fiqApm <= 2) fiqPenalty = 1
+
+  // 반올림: 0.5 이상 올림, 0.5 미만 내림
+  const fightiq = Math.min(10, Math.max(1, Math.floor(fiqBase + fiqElite - fiqPenalty + 0.5)))
 
   return {
     power:           power,
