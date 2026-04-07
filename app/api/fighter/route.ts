@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { calcScores, type RawStats } from '@/lib/fighter-score'
-import { getSql } from '@/lib/db'
 
 const WEIGHT_CLASSES = [
   'Strawweight', 'Flyweight', 'Bantamweight', 'Featherweight',
@@ -144,59 +143,19 @@ export async function GET(req: NextRequest) {
   }
 
   const slug = nameToSlug(name)
-  const sql = getSql()
 
-  // DB 먼저 조회
-  const rows = await sql`
-    SELECT * FROM ufc_fighters WHERE slug = ${slug} LIMIT 1
-  ` as Record<string, number>[]
-  const row = rows[0]
+  try {
+    const html = await fetchUFCFighter(slug)
+    const { raw, weightClass, position, target, winMethod } = parseStats(html, slug)
+    const scores = calcScores(raw)
 
-  if (!row) {
-    return NextResponse.json(
-      { error: `"${name}" 선수가 DB에 없습니다. Fighter DB에서 먼저 저장해주세요.`, notInDb: true },
-      { status: 404 }
-    )
+    return NextResponse.json({ slug, weightClass, raw, scores, position, target, winMethod })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : ''
+    if (msg === 'FIGHTER_NOT_FOUND') {
+      return NextResponse.json({ error: `"${name}" 선수를 UFC에서 찾을 수 없습니다. 영문 이름을 확인해주세요.` }, { status: 404 })
+    }
+    console.error('[fighter]', e)
+    return NextResponse.json({ error: 'UFC.com 데이터를 가져오지 못했습니다' }, { status: 500 })
   }
-
-  const raw: RawStats = {
-    strikePerMin:      row.strike_per_min,
-    allowedPerMin:     row.allowed_per_min,
-    striking_accuracy: row.striking_accuracy,
-    striking_defense:  row.striking_defense,
-    takedown_accuracy: row.takedown_accuracy,
-    takedown_defense:  row.takedown_defense,
-    td_per_15:         row.td_per_15,
-    subs_per_15:       row.subs_per_15,
-    avg_fight_min:     row.avg_fight_min,
-    kd_avg:            row.kd_avg,
-    ko_wins:           row.ko_wins,
-    sub_wins:          row.sub_wins,
-    dec_wins:          row.dec_wins,
-    total_wins:        row.total_wins,
-    ko_losses:         row.ko_losses,
-    sub_losses:        row.sub_losses,
-    dec_losses:        row.dec_losses,
-    total_losses:      row.total_losses,
-  }
-
-  const scores = calcScores(raw)
-
-  const position = {
-    posStanding: { count: row.pos_standing_count, pct: row.pos_standing_pct },
-    posClinch:   { count: row.pos_clinch_count,   pct: row.pos_clinch_pct },
-    posGround:   { count: row.pos_ground_count,   pct: row.pos_ground_pct },
-  }
-  const winMethod = {
-    koBar:  { count: row.ko_wins,  pct: row.ko_wins_pct },
-    decBar: { count: row.dec_wins, pct: row.dec_wins_pct },
-    subBar: { count: row.sub_wins, pct: row.sub_wins_pct },
-  }
-  const target = {
-    tgtHead: { count: 0, pct: 0 },
-    tgtBody: { count: 0, pct: 0 },
-    tgtLeg:  { count: 0, pct: 0 },
-  }
-
-  return NextResponse.json({ slug, weightClass: row.weight_class, raw, scores, position, target, winMethod })
 }

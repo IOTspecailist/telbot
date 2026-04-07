@@ -449,7 +449,8 @@ document.getElementById('searchBtn').addEventListener('click', function() {
   btn.textContent = '검색 중...';
   status.style.display = 'none';
 
-  fetch('/api/fighter?name=' + encodeURIComponent(name))
+  var slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  fetch('/api/ufc-fighters/' + encodeURIComponent(slug))
     .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
     .then(function(res) {
       if (!res.ok) {
