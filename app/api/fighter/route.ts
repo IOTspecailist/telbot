@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
   // DB 먼저 조회
   const rows = await sql`
     SELECT * FROM ufc_fighters WHERE slug = ${slug} LIMIT 1
-  `
+  ` as Record<string, number>[]
   const row = rows[0]
 
   if (!row) {
