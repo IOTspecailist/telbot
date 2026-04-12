@@ -339,9 +339,7 @@ var ANGLES = [0,1,2,3,4,5,6,7].map(function(i){ return -90 + 45*i; });
 
 // 비선형 S커브: 5.5 기준 편차 제곱 — 극단(1·10)은 드라마틱, 중간(5)은 약하게
 function curveR(val) {
-  var dev = val - 5.5;
-  var effective = 5.5 + dev * Math.abs(dev) / 4.5;
-  return Math.max(0, (effective - 1) / 9);
+  return (val - 1) / 9;
 }
 var _animId = null;
 var _animT = 0;
