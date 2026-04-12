@@ -6,6 +6,19 @@ const WEIGHT_CLASSES = [
   'Light Heavyweight', 'Lightweight', 'Welterweight', 'Middleweight', 'Heavyweight',
 ]
 
+// 한국어 체급명 → 영어 매핑
+const KR_WEIGHT_CLASS: Record<string, string> = {
+  '스트로급': 'Strawweight',
+  '플라이급': 'Flyweight',
+  '밴텀급': 'Bantamweight',
+  '페더급': 'Featherweight',
+  '라이트급': 'Lightweight',
+  '웰터급': 'Welterweight',
+  '미들급': 'Middleweight',
+  '라이트헤비급': 'Light Heavyweight',
+  '헤비급': 'Heavyweight',
+}
+
 const TRANSLITERATE: Record<string, string> = {
   à:'a',á:'a',â:'a',ã:'a',ä:'a',å:'a',
   è:'e',é:'e',ê:'e',ë:'e',
@@ -119,13 +132,42 @@ function parseStats(html: string, slug: string) {
   const strAcc = (circlePercs[0] ?? 0) / 100
   const tdAcc  = (circlePercs[1] ?? 0) / 100
 
-  // 5. 체급
+  // 5. 체급 - 라벨 근처 집중 탐색 (전체 HTML includes는 nav/링크 오염 때문에 부정확)
   let weightClass = 'Unknown'
   const htmlLower = html.toLowerCase()
-  for (const wc of WEIGHT_CLASSES) {
-    if (htmlLower.includes(wc.toLowerCase())) {
-      weightClass = wc
-      break
+
+  // 1단계: '체급' / 'weight class' 라벨 근처 500자 안에서 찾기
+  for (const label of ['체급', 'weight class']) {
+    const idx = htmlLower.indexOf(label)
+    if (idx === -1) continue
+    const nearby = html.slice(idx, idx + 500)
+    // 한국어 체급명 우선
+    for (const [kr, en] of Object.entries(KR_WEIGHT_CLASS)) {
+      if (nearby.includes(kr)) { weightClass = en; break }
+    }
+    if (weightClass !== 'Unknown') break
+    // 영어 체급명
+    const nearbyLower = nearby.toLowerCase()
+    for (const wc of WEIGHT_CLASSES) {
+      if (nearbyLower.includes(wc.toLowerCase())) { weightClass = wc; break }
+    }
+    if (weightClass !== 'Unknown') break
+  }
+
+  // 2단계: c-bio 섹션 안에서만 탐색
+  if (weightClass === 'Unknown') {
+    const bioStart = html.indexOf('c-bio')
+    if (bioStart !== -1) {
+      const bio = html.slice(bioStart, bioStart + 3000)
+      const bioLower = bio.toLowerCase()
+      for (const [kr, en] of Object.entries(KR_WEIGHT_CLASS)) {
+        if (bio.includes(kr)) { weightClass = en; break }
+      }
+      if (weightClass === 'Unknown') {
+        for (const wc of WEIGHT_CLASSES) {
+          if (bioLower.includes(wc.toLowerCase())) { weightClass = wc; break }
+        }
+      }
     }
   }
 
