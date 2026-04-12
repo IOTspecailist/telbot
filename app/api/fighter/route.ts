@@ -6,8 +6,31 @@ const WEIGHT_CLASSES = [
   'Light Heavyweight', 'Lightweight', 'Welterweight', 'Middleweight', 'Heavyweight',
 ]
 
+const TRANSLITERATE: Record<string, string> = {
+  à:'a',á:'a',â:'a',ã:'a',ä:'a',å:'a',
+  è:'e',é:'e',ê:'e',ë:'e',
+  ì:'i',í:'i',î:'i',ï:'i',
+  ò:'o',ó:'o',ô:'o',õ:'o',ö:'o',ø:'o',
+  ù:'u',ú:'u',û:'u',ü:'u',
+  ý:'y',ÿ:'y',
+  ñ:'n',ç:'c',ß:'ss',
+  š:'s',ś:'s',ș:'s',
+  ž:'z',ź:'z',ż:'z',
+  č:'c',ć:'c',
+  đ:'d',ð:'d',
+  ř:'r',
+  ł:'l',
+  ã:'a',
+  þ:'th',æ:'ae',œ:'oe',
+}
+
 function nameToSlug(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\u0000-\u007E]/g, c => TRANSLITERATE[c] ?? '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
 }
 
 function parseTime(t: string): number {
@@ -17,15 +40,26 @@ function parseTime(t: string): number {
 
 async function fetchUFCFighter(slug: string): Promise<string> {
   const url = `https://kr.ufc.com/athlete/${slug}`
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-    },
-    signal: AbortSignal.timeout(12000),
-  })
-  if (!res.ok) throw new Error(`UFC page not found (${res.status}): ${url}`)
-  return res.text()
+  const MAX_RETRIES = 3
+  let lastError: Error = new Error('unknown')
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+        },
+        signal: AbortSignal.timeout(12000),
+      })
+      if (!res.ok) throw new Error(`UFC page not found (${res.status}): ${url}`)
+      return await res.text()
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e))
+      if (attempt < MAX_RETRIES) await new Promise(r => setTimeout(r, 500 * attempt))
+    }
+  }
+  throw lastError
 }
 
 // 3bar 섹션에서 횟수·퍼센트 추출
