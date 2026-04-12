@@ -132,42 +132,33 @@ function parseStats(html: string, slug: string) {
   const strAcc = (circlePercs[0] ?? 0) / 100
   const tdAcc  = (circlePercs[1] ?? 0) / 100
 
-  // 5. 체급 - 라벨 근처 집중 탐색 (전체 HTML includes는 nav/링크 오염 때문에 부정확)
+  // 5. 체급
   let weightClass = 'Unknown'
   const htmlLower = html.toLowerCase()
 
-  // 1단계: '체급' / 'weight class' 라벨 근처 500자 안에서 찾기
-  for (const label of ['체급', 'weight class']) {
-    const idx = htmlLower.indexOf(label)
-    if (idx === -1) continue
-    const nearby = html.slice(idx, idx + 500)
-    // 한국어 체급명 우선
-    for (const [kr, en] of Object.entries(KR_WEIGHT_CLASS)) {
-      if (nearby.includes(kr)) { weightClass = en; break }
-    }
-    if (weightClass !== 'Unknown') break
-    // 영어 체급명
-    const nearbyLower = nearby.toLowerCase()
-    for (const wc of WEIGHT_CLASSES) {
-      if (nearbyLower.includes(wc.toLowerCase())) { weightClass = wc; break }
-    }
-    if (weightClass !== 'Unknown') break
+  // 1단계: hero-profile__division-title 에서 한국어 체급명 추출 (가장 정확)
+  // 예: <p class="hero-profile__division-title">라이트급 Division</p>
+  const divMatch = html.match(/hero-profile__(?:division-title|tag)">\s*([^<]+?)\s*Division/i)
+  if (divMatch) {
+    const krName = divMatch[1].trim()
+    if (KR_WEIGHT_CLASS[krName]) weightClass = KR_WEIGHT_CLASS[krName]
   }
 
-  // 2단계: c-bio 섹션 안에서만 탐색
+  // 2단계: hero-profile 영역 전체에서 한국어 체급명 탐색
   if (weightClass === 'Unknown') {
-    const bioStart = html.indexOf('c-bio')
-    if (bioStart !== -1) {
-      const bio = html.slice(bioStart, bioStart + 3000)
-      const bioLower = bio.toLowerCase()
+    const heroStart = html.indexOf('hero-profile')
+    if (heroStart !== -1) {
+      const heroSection = html.slice(heroStart, heroStart + 2000)
       for (const [kr, en] of Object.entries(KR_WEIGHT_CLASS)) {
-        if (bio.includes(kr)) { weightClass = en; break }
+        if (heroSection.includes(kr)) { weightClass = en; break }
       }
-      if (weightClass === 'Unknown') {
-        for (const wc of WEIGHT_CLASSES) {
-          if (bioLower.includes(wc.toLowerCase())) { weightClass = wc; break }
-        }
-      }
+    }
+  }
+
+  // 3단계: 전체 HTML에서 한국어 체급명 탐색
+  if (weightClass === 'Unknown') {
+    for (const [kr, en] of Object.entries(KR_WEIGHT_CLASS)) {
+      if (html.includes(kr)) { weightClass = en; break }
     }
   }
 
