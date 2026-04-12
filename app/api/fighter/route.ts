@@ -20,7 +20,6 @@ const TRANSLITERATE: Record<string, string> = {
   đ:'d',ð:'d',
   ř:'r',
   ł:'l',
-  ã:'a',
   þ:'th',æ:'ae',œ:'oe',
 }
 
