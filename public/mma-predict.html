@@ -136,17 +136,6 @@ body {
   white-space:nowrap;
 }
 .btn-predict:hover { background:#a00014; }
-.result-mode-badge {
-  display:inline-block;
-  margin-left:8px;
-  padding:1px 7px;
-  font-size:10px;
-  letter-spacing:1px;
-  border-radius:3px;
-  background:#333;
-  color:#aaa;
-  vertical-align:middle;
-}
 /* 카드 풀 */
 .card-pool {
   width:100%;
@@ -345,59 +334,75 @@ body {
   letter-spacing:5px;
   color:#bbb;
   border-bottom:1px solid rgba(0,0,0,0.06);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 }
-/* 우승자 배너 */
+.result-mode-badge {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:9px;
+  letter-spacing:2px;
+  padding:2px 8px;
+  border-radius:3px;
+  background:#222;
+  color:#aaa;
+}
+/* 대결 결과 */
 .result-winner-zone {
-  padding:26px 16px 22px;
-  text-align:center;
-  background:linear-gradient(175deg, rgba(212,0,26,0.06) 0%, #fff 55%);
-  border-top:5px solid #d4001a;
+  border-top:4px solid #d4001a;
   position:relative;
-  overflow:hidden;
 }
-.result-winner-zone::after {
-  content:'';
-  position:absolute;
-  left:50%; top:0;
-  transform:translateX(-50%);
-  width:60%;
-  height:1px;
-  background:linear-gradient(90deg,transparent,rgba(212,0,26,0.25),transparent);
+.result-winner-zone.winner-b { border-top-color:#0055d4; }
+/* 승자/패자 행 */
+.fw-row {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 18px;
 }
-.result-winner-zone.winner-b {
-  border-top-color:#0055d4;
-  background:linear-gradient(175deg, rgba(0,85,212,0.06) 0%, #fff 55%);
+.fw-row-winner {
+  background:linear-gradient(90deg, rgba(212,0,26,0.05) 0%, #fff 70%);
+  border-bottom:1px solid rgba(0,0,0,0.06);
 }
-.result-winner-zone.winner-b::after {
-  background:linear-gradient(90deg,transparent,rgba(0,85,212,0.25),transparent);
+.fw-row-winner-b {
+  background:linear-gradient(90deg, rgba(0,85,212,0.05) 0%, #fff 70%);
+  border-bottom:1px solid rgba(0,0,0,0.06);
 }
-.result-winner-label {
+.fw-row-loser {
+  background:#fafafa;
+}
+.fw-badge {
   font-family:'Bebas Neue',sans-serif;
-  font-size:11px;
-  letter-spacing:7px;
-  color:#d4001a;
-  margin-bottom:10px;
-  opacity:0.7;
+  font-size:9px;
+  letter-spacing:2px;
+  padding:3px 7px;
+  border-radius:2px;
+  flex-shrink:0;
 }
-.result-winner-zone.winner-b .result-winner-label { color:#0055d4; }
-.result-winner-name {
+.fw-badge-win-a  { background:#d4001a; color:#fff; }
+.fw-badge-win-b  { background:#0055d4; color:#fff; }
+.fw-badge-loss { background:rgba(0,0,0,0.1); color:#999; }
+.fw-name {
   font-family:'Bebas Neue',sans-serif;
-  font-size:62px;
-  letter-spacing:3px;
+  letter-spacing:2px;
   line-height:1;
-  word-break:break-word;
-  padding:0 8px;
-  animation:winnerReveal 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
-.result-winner-name.name-a { color:#d4001a; }
-.result-winner-name.name-b { color:#0055d4; }
-.result-winner-sub {
+.fw-name-winner-a { font-size:30px; color:#d4001a; animation:winnerReveal 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+.fw-name-winner-b { font-size:30px; color:#0055d4; animation:winnerReveal 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+.fw-name-loser  { font-size:22px; color:#888; }
+.fw-pct {
   font-family:'Bebas Neue',sans-serif;
-  font-size:10px;
-  letter-spacing:4px;
-  color:#ccc;
-  margin-top:8px;
+  font-size:22px;
+  letter-spacing:1px;
+  flex-shrink:0;
 }
+.fw-pct-winner-a { color:#d4001a; }
+.fw-pct-winner-b { color:#0055d4; }
+.fw-pct-loser  { color:#bbb; font-size:16px; }
 @keyframes winnerReveal {
   0%   { opacity:0; transform:translateY(16px) scale(0.84); }
   100% { opacity:1; transform:translateY(0) scale(1); }
@@ -467,7 +472,7 @@ body {
 /* 패배 처리 */
 .prob-side.loser {
   filter:grayscale(1);
-  opacity:0.38;
+  opacity:0.55;
 }
 .prob-big-pct {
   font-family:'Bebas Neue',sans-serif;
@@ -1185,17 +1190,28 @@ function renderResult(useBonus) {
   var winner = winSlot === 'A' ? slotA : slotB;
   var loser  = winSlot === 'A' ? slotB : slotA;
 
-  // 우승자 배너
+  // result-header에 모드 배지 표시
+  var rh = document.querySelector('.result-header');
+  if (rh) rh.innerHTML =
+    '<span>PREDICTION RESULT</span>' +
+    '<span class="result-mode-badge">' + (useBonus ? 'WEIGHT APPLIED' : 'STAT ONLY') + '</span>';
+
+  // 승자/패자 두 행 표시
   var wz = document.getElementById('resultWinnerZone');
   wz.className = 'result-winner-zone' + (winSlot === 'B' ? ' winner-b' : '');
+  var winPct  = winSlot === 'A' ? prob.a : prob.b;
+  var losePct = winSlot === 'A' ? prob.b : prob.a;
   wz.innerHTML =
-    '<div class="result-winner-label">PREDICTED WINNER' +
-      '<span class="result-mode-badge">' + (useBonus ? '체급적용' : '체급무시') + '</span>' +
+    '<div class="fw-row ' + (winSlot === 'B' ? 'fw-row-winner-b' : 'fw-row-winner') + '">' +
+      '<span class="fw-badge ' + (winSlot === 'B' ? 'fw-badge-win-b' : 'fw-badge-win-a') + '">WIN</span>' +
+      '<span class="fw-name ' + (winSlot === 'B' ? 'fw-name-winner-b' : 'fw-name-winner-a') + '">' + winner.name + '</span>' +
+      '<span class="fw-pct ' + (winSlot === 'B' ? 'fw-pct-winner-b' : 'fw-pct-winner-a') + '">' + winPct + '%</span>' +
     '</div>' +
-    '<div class="result-winner-name name-' + winSlot.toLowerCase() + '">' +
-      winner.name +
-    '</div>' +
-    '<div class="result-winner-sub">def. ' + loser.name + '</div>';
+    '<div class="fw-row fw-row-loser">' +
+      '<span class="fw-badge fw-badge-loss">LOSS</span>' +
+      '<span class="fw-name fw-name-loser">' + loser.name + '</span>' +
+      '<span class="fw-pct fw-pct-loser">' + losePct + '%</span>' +
+    '</div>';
 
   // 확률 비율 바 라벨
   var barA = document.getElementById('sharedBarA');
