@@ -38,6 +38,62 @@ function toScore(n: number): number {
   return Math.min(10, Math.max(1, Math.round(n * 9 + 1)))
 }
 
+// 타격정확도 (striking_accuracy) 티어
+function tierStrikingAccuracy(v: number): number {
+  if (v >= 0.62) return 10
+  if (v >= 0.59) return 9
+  if (v >= 0.57) return 8
+  if (v >= 0.55) return 7
+  if (v >= 0.53) return 6
+  if (v >= 0.51) return 5
+  if (v >= 0.49) return 4
+  if (v >= 0.48) return 3
+  if (v >= 0.44) return 2
+  return 1
+}
+
+// 타격방어 (striking_defense) 티어
+function tierStrikingDefense(v: number): number {
+  if (v >= 0.64) return 10
+  if (v >= 0.61) return 9
+  if (v >= 0.60) return 8
+  if (v >= 0.59) return 7
+  if (v >= 0.57) return 6
+  if (v >= 0.55) return 5
+  if (v >= 0.53) return 4
+  if (v >= 0.50) return 3
+  if (v >= 0.47) return 2
+  return 1
+}
+
+// 레슬링성공 (takedown_accuracy) 티어
+function tierTakedownAccuracy(v: number): number {
+  if (v >= 0.61) return 10
+  if (v >= 0.52) return 9
+  if (v >= 0.49) return 8
+  if (v >= 0.45) return 7
+  if (v >= 0.41) return 6
+  if (v >= 0.38) return 5
+  if (v >= 0.34) return 4
+  if (v >= 0.30) return 3
+  if (v >= 0.23) return 2
+  return 1
+}
+
+// 레슬링방어 (takedown_defense) 티어
+function tierTakedownDefense(v: number): number {
+  if (v >= 0.91) return 10
+  if (v >= 0.86) return 9
+  if (v >= 0.81) return 8
+  if (v >= 0.76) return 7
+  if (v >= 0.72) return 6
+  if (v >= 0.69) return 5
+  if (v >= 0.64) return 4
+  if (v >= 0.58) return 3
+  if (v >= 0.48) return 2
+  return 1
+}
+
 export function calcScores(s: RawStats): Scores {
   const totalFights = s.total_wins + s.total_losses
 
@@ -82,21 +138,17 @@ export function calcScores(s: RawStats): Scores {
 
   power = Math.min(10, Math.max(1, power))
 
-  // 타격성공: 타격정확도 × 0.6 + strikePerMin정규화 × 0.4
-  const strikingOffense =
-    s.striking_accuracy * 0.6 +
-    normalize(s.strikePerMin, 1.5, 7.0) * 0.4
+  // 타격정확도 티어 기반
+  const strikingOffense = tierStrikingAccuracy(s.striking_accuracy)
 
-  // 타격방어: striking_defense 그대로 변환
-  const strikingDefense = s.striking_defense
+  // 타격방어 티어 기반
+  const strikingDefenseScore = tierStrikingDefense(s.striking_defense)
 
-  // 레슬링성공: takedown_accuracy × 0.5 + normalize(td_per_15, 0, 6) × 0.5
-  const wrestlingOffense =
-    s.takedown_accuracy * 0.5 +
-    normalize(s.td_per_15, 0, 6) * 0.5
+  // 레슬링성공 티어 기반
+  const wrestlingOffense = tierTakedownAccuracy(s.takedown_accuracy)
 
-  // 레슬링방어: takedown_defense 그대로 변환
-  const wrestlingDefense = s.takedown_defense
+  // 레슬링방어 티어 기반
+  const wrestlingDefense = tierTakedownDefense(s.takedown_defense)
 
   // 서브미션: 서브미션 승률 + 15분당 서브미션
   const jiujitsu = s.total_wins > 0
@@ -156,13 +208,13 @@ export function calcScores(s: RawStats): Scores {
   const fightiq = Math.min(10, Math.max(1, Math.floor(fiqBase + fiqElite - fiqPenalty + 0.5)))
 
   return {
-    power:           power,
-    strikingOffense: toScore(strikingOffense),
-    strikingDefense: toScore(strikingDefense),
-    wrestlingOffense: toScore(wrestlingOffense),
-    wrestlingDefense: toScore(wrestlingDefense),
-    jiujitsu:        toScore(jiujitsu),
-    cardio:          toScore(cardio),
+    power:            power,
+    strikingOffense:  strikingOffense,
+    strikingDefense:  strikingDefenseScore,
+    wrestlingOffense: wrestlingOffense,
+    wrestlingDefense: wrestlingDefense,
+    jiujitsu:         toScore(jiujitsu),
+    cardio:           toScore(cardio),
     fightiq,
   }
 }
