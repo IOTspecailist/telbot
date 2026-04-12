@@ -95,6 +95,58 @@ body {
   white-space:nowrap;
 }
 .btn-reset:hover { background:#555; }
+/* 승자예측 컨트롤 */
+.predict-controls {
+  width:100%;
+  max-width:480px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:10px 0 4px;
+}
+.mode-radio-group {
+  display:flex;
+  gap:16px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:14px;
+  letter-spacing:1px;
+  color:#ccc;
+}
+.mode-radio-group label {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  cursor:pointer;
+}
+.mode-radio-group input[type=radio] {
+  accent-color:#d4001a;
+  cursor:pointer;
+}
+.btn-predict {
+  padding:8px 20px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px;
+  letter-spacing:2px;
+  border:none;
+  border-radius:3px;
+  cursor:pointer;
+  background:#d4001a;
+  color:#fff;
+  white-space:nowrap;
+}
+.btn-predict:hover { background:#a00014; }
+.result-mode-badge {
+  display:inline-block;
+  margin-left:8px;
+  padding:1px 7px;
+  font-size:10px;
+  letter-spacing:1px;
+  border-radius:3px;
+  background:#333;
+  color:#aaa;
+  vertical-align:middle;
+}
 /* 카드 풀 */
 .card-pool {
   width:100%;
@@ -796,8 +848,7 @@ body {
 <div class="section-label">저장된 카드 — 드래그 또는 A·B 버튼으로 선택</div>
 <div id="cardPool" class="card-pool"></div>
 
-<div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
-  <span>VS</span>
+<div class="section-label" style="display:flex;align-items:center;justify-content:flex-end;">
   <button class="btn-reset" onclick="resetAll()">RESET</button>
 </div>
 <div class="vs-container" id="vsContainer">
@@ -812,6 +863,14 @@ body {
     <div class="zone-label">FIGHTER B</div>
     <div class="zone-placeholder">카드를 여기에<br>드래그하세요</div>
   </div>
+</div>
+
+<div class="predict-controls">
+  <div class="mode-radio-group">
+    <label><input type="radio" name="weightMode" value="ignore" checked> 체급무시</label>
+    <label><input type="radio" name="weightMode" value="apply"> 체급적용</label>
+  </div>
+  <button class="btn-predict" onclick="runPredict()">승자예측 ▶</button>
 </div>
 
 <div id="result" class="result-section" style="display:none">
@@ -845,6 +904,18 @@ var WEIGHTS = {
   power:1.3, strikingOffense:1.2, jiujitsu:1.1,
   strikingDefense:1.0, wrestlingOffense:1.0
   // micwork, aura 계산 제외
+};
+
+var WEIGHT_CLASS_BONUS = {
+  'Heavyweight':       19,
+  'Light Heavyweight': 16,
+  'Middleweight':      12,
+  'Welterweight':      10,
+  'Lightweight':        7,
+  'Featherweight':      5,
+  'Bantamweight':       3,
+  'Flyweight':          1,
+  'Strawweight':        0,
 };
 var STAT_LABELS = {
   fightiq:'Fight IQ', strikingOffense:'타격성공', wrestlingDefense:'레슬링방어',
@@ -888,13 +959,29 @@ function calcScore(card) {
 function calcProb(cardA, cardB) {
   var sA = calcScore(cardA);
   var sB = calcScore(cardB);
-  // 세제곱 사용: 가중치 차이를 더 극적으로 반영
   var pA = sA * sA * sA;
   var pB = sB * sB * sB;
   var total = pA + pB;
-  var a = Math.round(pA / total * 1000) / 10; // 소수점 1자리
+  var a = Math.round(pA / total * 1000) / 10;
   var b = Math.round((1000 - a * 10)) / 10;
   return { a: a, b: b };
+}
+
+function calcProbWithBonus(cardA, cardB) {
+  var sA = calcScore(cardA) + (WEIGHT_CLASS_BONUS[cardA.weight_class] || 0);
+  var sB = calcScore(cardB) + (WEIGHT_CLASS_BONUS[cardB.weight_class] || 0);
+  var pA = sA * sA * sA;
+  var pB = sB * sB * sB;
+  var total = pA + pB;
+  var a = Math.round(pA / total * 1000) / 10;
+  var b = Math.round((1000 - a * 10)) / 10;
+  return { a: a, b: b };
+}
+
+function runPredict() {
+  if (!slotA || !slotB) { alert('선수를 두 명 선택하세요'); return; }
+  var useBonus = document.querySelector('input[name="weightMode"]:checked').value === 'apply';
+  playClashThenScan(function() { renderResult(useBonus); });
 }
 
 function resetAll() {
@@ -941,11 +1028,7 @@ function placeCard(cardId, slot) {
   if (slot === 'A') slotA = card;
   else slotB = card;
   renderZone(slot);
-  if (slotA && slotB) {
-    playClashThenScan(function() { renderResult(); });
-  } else {
-    document.getElementById('result').style.display = 'none';
-  }
+  document.getElementById('result').style.display = 'none';
 }
 
 function renderZone(slot) {
@@ -1096,8 +1179,8 @@ function playAnimation(effect, done) {
   }
 }
 
-function renderResult() {
-  var prob = calcProb(slotA, slotB);
+function renderResult(useBonus) {
+  var prob = useBonus ? calcProbWithBonus(slotA, slotB) : calcProb(slotA, slotB);
   var winSlot = prob.a >= prob.b ? 'A' : 'B';
   var winner = winSlot === 'A' ? slotA : slotB;
   var loser  = winSlot === 'A' ? slotB : slotA;
@@ -1106,7 +1189,9 @@ function renderResult() {
   var wz = document.getElementById('resultWinnerZone');
   wz.className = 'result-winner-zone' + (winSlot === 'B' ? ' winner-b' : '');
   wz.innerHTML =
-    '<div class="result-winner-label">PREDICTED WINNER</div>' +
+    '<div class="result-winner-label">PREDICTED WINNER' +
+      '<span class="result-mode-badge">' + (useBonus ? '체급적용' : '체급무시') + '</span>' +
+    '</div>' +
     '<div class="result-winner-name name-' + winSlot.toLowerCase() + '">' +
       winner.name +
     '</div>' +
