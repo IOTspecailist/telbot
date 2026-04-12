@@ -136,49 +136,73 @@ body {
   white-space:nowrap;
 }
 .btn-predict:hover { background:#a00014; }
-/* 카드 풀 */
-.card-pool {
+/* 체급 탭 */
+.weight-tabs {
   width:100%;
   max-width:480px;
   display:flex;
-  gap:10px;
-  overflow-x:auto;
-  padding-bottom:6px;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-bottom:6px;
 }
-.card-pool::-webkit-scrollbar { height:3px; }
-.card-pool::-webkit-scrollbar-thumb { background:#d4001a; border-radius:2px; }
-.pool-card {
-  flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:4px;
-  cursor:grab;
-}
-.pool-card img {
-  width:80px;
-  height:109px;
-  border-radius:3px;
-  border:2px solid rgba(0,0,0,0.1);
-  display:block;
-  pointer-events:none;
-  object-fit:cover;
-}
-.pool-card:hover img { border-color:rgba(212,0,26,0.6); }
-.pool-card .card-name {
+.weight-tab {
   font-family:'Bebas Neue',sans-serif;
-  font-size:10px;
-  color:#555;
+  font-size:12px;
   letter-spacing:1px;
-  text-align:center;
-  max-width:80px;
-  white-space:nowrap;
+  padding:5px 11px;
+  border:1px solid rgba(0,0,0,0.15);
+  border-radius:3px;
+  background:#fff;
+  color:#888;
+  cursor:pointer;
+  position:relative;
+}
+.weight-tab.active {
+  background:#d4001a;
+  color:#fff;
+  border-color:#d4001a;
+}
+.weight-tab-count {
+  font-size:9px;
+  margin-left:4px;
+  opacity:0.7;
+}
+/* 선수 리스트 */
+.card-list {
+  width:100%;
+  max-width:480px;
+  background:#fff;
+  border-radius:6px;
+  overflow:hidden;
+  border:1px solid rgba(0,0,0,0.08);
+  margin-bottom:4px;
+  max-height:220px;
+  overflow-y:auto;
+}
+.card-list::-webkit-scrollbar { width:3px; }
+.card-list::-webkit-scrollbar-thumb { background:#d4001a; border-radius:2px; }
+.fighter-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:9px 14px;
+  border-bottom:1px solid rgba(0,0,0,0.05);
+  transition:background 0.1s;
+}
+.fighter-row:last-child { border-bottom:none; }
+.fighter-row:hover { background:rgba(0,0,0,0.02); }
+.fighter-row-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px;
+  letter-spacing:1px;
+  color:#222;
   overflow:hidden;
   text-overflow:ellipsis;
+  white-space:nowrap;
 }
-.slot-btns { display:flex; gap:4px; }
+.fighter-row-btns { display:flex; gap:6px; flex-shrink:0; }
 .slot-btn {
-  padding:2px 8px;
+  padding:3px 10px;
   font-family:'Bebas Neue',sans-serif;
   font-size:11px;
   letter-spacing:1px;
@@ -850,8 +874,9 @@ body {
   <div style="width:80px"></div>
 </div>
 
-<div class="section-label">저장된 카드 — 드래그 또는 A·B 버튼으로 선택</div>
-<div id="cardPool" class="card-pool"></div>
+<div class="section-label">선수 선택</div>
+<div id="weightTabs" class="weight-tabs"></div>
+<div id="cardPool" class="card-list"></div>
 
 <div class="section-label" style="display:flex;align-items:center;justify-content:flex-end;">
   <button class="btn-reset" onclick="resetAll()">RESET</button>
@@ -861,12 +886,12 @@ body {
   <div id="animOverlay"></div>
   <div id="zoneA" class="drop-zone">
     <div class="zone-label">FIGHTER A</div>
-    <div class="zone-placeholder">카드를 여기에<br>드래그하세요</div>
+    <div class="zone-placeholder">위에서 선수를<br>선택하세요</div>
   </div>
   <div class="vs-badge">VS</div>
   <div id="zoneB" class="drop-zone">
     <div class="zone-label">FIGHTER B</div>
-    <div class="zone-placeholder">카드를 여기에<br>드래그하세요</div>
+    <div class="zone-placeholder">위에서 선수를<br>선택하세요</div>
   </div>
 </div>
 
@@ -929,6 +954,14 @@ var STAT_LABELS = {
 };
 
 var _cards = [];
+var _activeWC = null;
+
+var WC_ORDER = ['Strawweight','Flyweight','Bantamweight','Featherweight','Lightweight','Welterweight','Middleweight','Light Heavyweight','Heavyweight'];
+var WC_SHORT = {
+  'Strawweight':'STR', 'Flyweight':'FLY', 'Bantamweight':'BAN',
+  'Featherweight':'FEA', 'Lightweight':'LGT', 'Welterweight':'WEL',
+  'Middleweight':'MID', 'Light Heavyweight':'LHW', 'Heavyweight':'HVY',
+};
 
 function loadCards(cb) {
   fetch('/api/cards')
@@ -996,7 +1029,9 @@ function resetAll() {
 }
 
 function renderPool() {
+  var tabs = document.getElementById('weightTabs');
   var pool = document.getElementById('cardPool');
+  tabs.innerHTML = '';
   pool.innerHTML = '<div class="no-cards-msg">불러오는 중...</div>';
   loadCards(function() {
     pool.innerHTML = '';
@@ -1004,26 +1039,55 @@ function renderPool() {
       pool.innerHTML = '<div class="no-cards-msg">저장된 카드가 없습니다<br>← STAT 생성기에서 카드를 먼저 만들어주세요</div>';
       return;
     }
-    _cards.forEach(function(card) {
-      var el = document.createElement('div');
-      el.className = 'pool-card';
-      el.draggable = true;
-      el.dataset.id = card.id;
-      el.innerHTML =
-        '<img src="' + (card.image || '') + '" alt="' + card.name + '">' +
-        '<div class="card-name">' + card.name + '</div>' +
-        '<div class="slot-btns">' +
-          '<button class="slot-btn slot-btn-a">A</button>' +
-          '<button class="slot-btn slot-btn-b">B</button>' +
-        '</div>';
-      el.querySelector('.slot-btn-a').addEventListener('click', function() { placeCard(card.id, 'A'); });
-      el.querySelector('.slot-btn-b').addEventListener('click', function() { placeCard(card.id, 'B'); });
-      el.addEventListener('dragstart', function(e) {
-        e.dataTransfer.setData('cardId', card.id);
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      pool.appendChild(el);
+
+    // 체급별 그룹핑
+    var groups = {};
+    _cards.forEach(function(c) {
+      var wc = c.weight_class || 'Unknown';
+      if (!groups[wc]) groups[wc] = [];
+      groups[wc].push(c);
     });
+
+    var available = WC_ORDER.filter(function(wc) { return groups[wc] && groups[wc].length > 0; });
+    // WC_ORDER에 없는 체급 추가 (Unknown 등)
+    Object.keys(groups).forEach(function(wc) {
+      if (available.indexOf(wc) === -1) available.push(wc);
+    });
+
+    // 탭 생성
+    _activeWC = _activeWC && groups[_activeWC] ? _activeWC : available[0];
+    available.forEach(function(wc) {
+      var btn = document.createElement('button');
+      btn.className = 'weight-tab' + (wc === _activeWC ? ' active' : '');
+      btn.innerHTML = (WC_SHORT[wc] || wc) + '<span class="weight-tab-count">' + groups[wc].length + '</span>';
+      btn.addEventListener('click', function() {
+        _activeWC = wc;
+        document.querySelectorAll('.weight-tab').forEach(function(t) { t.classList.remove('active'); });
+        btn.classList.add('active');
+        renderCardList(groups[wc]);
+      });
+      tabs.appendChild(btn);
+    });
+
+    renderCardList(groups[_activeWC]);
+  });
+}
+
+function renderCardList(cards) {
+  var pool = document.getElementById('cardPool');
+  pool.innerHTML = '';
+  cards.forEach(function(card) {
+    var el = document.createElement('div');
+    el.className = 'fighter-row';
+    el.innerHTML =
+      '<div class="fighter-row-name">' + card.name + '</div>' +
+      '<div class="fighter-row-btns">' +
+        '<button class="slot-btn slot-btn-a">A</button>' +
+        '<button class="slot-btn slot-btn-b">B</button>' +
+      '</div>';
+    el.querySelector('.slot-btn-a').addEventListener('click', function() { placeCard(card.id, 'A'); });
+    el.querySelector('.slot-btn-b').addEventListener('click', function() { placeCard(card.id, 'B'); });
+    pool.appendChild(el);
   });
 }
 
@@ -1043,7 +1107,7 @@ function renderZone(slot) {
     zone.className = 'drop-zone';
     zone.innerHTML =
       '<div class="zone-label">FIGHTER ' + slot + '</div>' +
-      '<div class="zone-placeholder">카드를 여기에<br>드래그하세요</div>';
+      '<div class="zone-placeholder">위에서 선수를<br>선택하세요</div>';
     return;
   }
   var all = {
@@ -1375,24 +1439,6 @@ function saveResultImage() {
   });
 }
 
-var vsContainer = document.getElementById('vsContainer');
-vsContainer.addEventListener('dragover', function(e) {
-  var zone = e.target.closest('.drop-zone');
-  if (zone) { e.preventDefault(); zone.classList.add('drag-over'); }
-});
-vsContainer.addEventListener('dragleave', function(e) {
-  var zone = e.target.closest('.drop-zone');
-  if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
-});
-vsContainer.addEventListener('drop', function(e) {
-  var zone = e.target.closest('.drop-zone');
-  if (!zone) return;
-  e.preventDefault();
-  zone.classList.remove('drag-over');
-  var cardId = e.dataTransfer.getData('cardId');
-  var slot = zone.id === 'zoneA' ? 'A' : 'B';
-  placeCard(cardId, slot);
-});
 
 window.onload = function() { renderPool(); };
 </script>
