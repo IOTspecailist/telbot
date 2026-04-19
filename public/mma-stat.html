@@ -130,7 +130,19 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
   color:#d4001a;
   letter-spacing:3px;
 }
-.card-list { display:flex; flex-wrap:wrap; gap:10px; }
+.card-list {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  max-height:320px;
+  overflow-y:auto;
+  padding-right:4px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(212,0,26,0.3) transparent;
+}
+.card-list::-webkit-scrollbar { width:4px; }
+.card-list::-webkit-scrollbar-track { background:transparent; }
+.card-list::-webkit-scrollbar-thumb { background:rgba(212,0,26,0.3); border-radius:2px; }
 .card-item {
   position:relative;
   cursor:grab;
