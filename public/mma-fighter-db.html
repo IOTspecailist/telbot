@@ -11,15 +11,18 @@ body {
   background:#f2ede4;
   color:#1a1a1a;
   font-family:'Barlow Condensed',sans-serif;
-  padding:16px;
+  padding:12px 16px 24px;
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:12px;
+  gap:10px;
+  min-height:100vh;
 }
+
+/* ─── 상단 바 ─── */
 .top-bar {
   width:100%;
-  max-width:520px;
+  max-width:860px;
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -30,26 +33,28 @@ body {
   color:#1a1a1a;
   letter-spacing:4px;
 }
-.panel {
+
+/* ─── 검색 패널 ─── */
+.search-panel {
   width:100%;
-  max-width:520px;
+  max-width:860px;
   background:#fff;
   border:1px solid rgba(212,0,26,0.15);
   border-left:3px solid #d4001a;
   border-radius:4px;
-  padding:14px;
+  padding:10px 14px;
   display:flex;
-  flex-direction:column;
-  gap:10px;
-  box-shadow:0 1px 6px rgba(0,0,0,0.06);
+  align-items:center;
+  gap:8px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
 }
-.panel h2 {
+.search-label {
   font-family:'Bebas Neue',sans-serif;
-  font-size:13px;
+  font-size:11px;
   color:#d4001a;
-  letter-spacing:3px;
+  letter-spacing:2px;
+  white-space:nowrap;
 }
-.row { display:flex; gap:8px; }
 input[type=text] {
   flex:1;
   background:#fafafa;
@@ -57,19 +62,22 @@ input[type=text] {
   border-radius:3px;
   color:#1a1a1a;
   font-family:'Bebas Neue',sans-serif;
-  font-size:20px;
+  font-size:18px;
   letter-spacing:2px;
-  padding:8px 12px;
+  padding:6px 10px;
   outline:none;
+  min-width:0;
 }
 input[type=text]:focus { border-color:#d4001a; }
+
+/* ─── 버튼 ─── */
 .btn {
-  padding:8px 18px;
+  padding:7px 16px;
   background:#d4001a;
   border:none;
   border-radius:3px;
   font-family:'Bebas Neue',sans-serif;
-  font-size:14px;
+  font-size:13px;
   letter-spacing:2px;
   color:#fff;
   cursor:pointer;
@@ -78,13 +86,13 @@ input[type=text]:focus { border-color:#d4001a; }
 .btn:hover { background:#b8001a; }
 .btn:disabled { background:#ccc; cursor:default; }
 .btn-outline {
-  padding:7px 14px;
+  padding:5px 10px;
   background:#fff;
   border:1px solid rgba(0,0,0,0.18);
   border-radius:3px;
   font-family:'Bebas Neue',sans-serif;
-  font-size:13px;
-  letter-spacing:2px;
+  font-size:11px;
+  letter-spacing:1.5px;
   color:#555;
   cursor:pointer;
   white-space:nowrap;
@@ -94,114 +102,212 @@ input[type=text]:focus { border-color:#d4001a; }
 .btn-outline:hover { border-color:#d4001a; color:#d4001a; }
 .btn-save {
   width:100%;
-  max-width:520px;
-  padding:13px;
+  padding:10px;
   background:#1a6b1a;
   border:none;
-  border-radius:4px;
+  border-radius:3px;
   font-family:'Bebas Neue',sans-serif;
-  font-size:15px;
+  font-size:13px;
   letter-spacing:3px;
   color:#fff;
   cursor:pointer;
+  margin-top:4px;
 }
 .btn-save:hover { background:#155515; }
 .btn-save:disabled { background:#ccc; cursor:default; }
+
+/* ─── 상태 메시지 ─── */
 .status {
   width:100%;
-  max-width:520px;
-  padding:9px 12px;
-  font-size:13px;
+  max-width:860px;
+  padding:7px 12px;
+  font-size:12px;
   font-weight:700;
   letter-spacing:1px;
-  border-radius:4px;
+  border-radius:3px;
   display:none;
 }
 .status.ok  { background:rgba(26,107,26,0.08); border:1px solid rgba(26,107,26,0.3); color:#1a6b1a; }
 .status.err { background:rgba(212,0,26,0.07); border:1px solid rgba(212,0,26,0.3); color:#d4001a; }
 
-/* 스탯 테이블 */
-.stat-table {
+/* ─── 2열 메인 그리드 ─── */
+.main-grid {
   width:100%;
-  border-collapse:collapse;
-  font-size:13px;
-}
-.stat-table th {
-  text-align:left;
-  font-family:'Bebas Neue',sans-serif;
-  font-size:11px;
-  letter-spacing:2px;
-  color:#d4001a;
-  padding:4px 6px;
-  border-bottom:1px solid rgba(212,0,26,0.2);
-}
-.stat-table td {
-  padding:4px 6px;
-  border-bottom:1px solid rgba(0,0,0,0.05);
-  color:#333;
-}
-.stat-table td:last-child { text-align:right; font-weight:700; color:#1a1a1a; }
-.stat-section-title {
-  font-family:'Bebas Neue',sans-serif;
-  font-size:11px;
-  color:#d4001a;
-  letter-spacing:3px;
-  margin-top:8px;
-  padding-bottom:3px;
-  border-bottom:1px solid rgba(212,0,26,0.2);
+  max-width:860px;
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:10px;
+  align-items:start;
 }
 
-/* 저장된 선수 목록 */
-.fighter-list {
-  width:100%;
-  max-width:520px;
+/* ─── 선수 목록 (왼쪽) ─── */
+.fighter-col {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
 }
-.fighter-list-header {
+.col-header {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:8px;
+  padding:0 2px;
 }
-.fighter-list-header span {
+.col-header-title {
   font-family:'Bebas Neue',sans-serif;
-  font-size:13px;
+  font-size:11px;
   color:#d4001a;
-  letter-spacing:3px;
+  letter-spacing:2.5px;
+}
+.col-header-actions { display:flex; gap:4px; }
+.fighter-list-body {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
 }
 .fighter-row {
   background:#fff;
   border:1px solid rgba(0,0,0,0.08);
+  border-left:2px solid transparent;
   border-radius:3px;
-  padding:8px 12px;
-  margin-bottom:6px;
+  padding:5px 8px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   cursor:pointer;
-  transition:border-color 0.15s;
+  transition:border-color 0.12s;
 }
 .fighter-row:hover { border-color:#d4001a; }
-.fighter-row.active { border-color:#d4001a; border-left:3px solid #d4001a; }
+.fighter-row.active {
+  border-color:#d4001a;
+  border-left-color:#d4001a;
+  background:rgba(212,0,26,0.03);
+}
 .fighter-row .fname {
   font-family:'Bebas Neue',sans-serif;
-  font-size:15px;
-  letter-spacing:1px;
+  font-size:13px;
+  letter-spacing:0.5px;
+  line-height:1.2;
 }
-.fighter-row .fmeta { color:#888; font-size:11px; margin-top:1px; }
-.fighter-row .row-actions { display:flex; gap:6px; align-items:center; }
+.fighter-row .fmeta {
+  color:#999;
+  font-size:10px;
+  line-height:1.2;
+}
 .btn-del {
-  padding:4px 10px;
+  padding:3px 7px;
   background:#fff;
-  border:1px solid rgba(212,0,26,0.3);
-  border-radius:3px;
+  border:1px solid rgba(212,0,26,0.25);
+  border-radius:2px;
   font-family:'Bebas Neue',sans-serif;
-  font-size:11px;
+  font-size:10px;
   letter-spacing:1px;
   color:#d4001a;
   cursor:pointer;
+  flex-shrink:0;
 }
 .btn-del:hover { background:#d4001a; color:#fff; }
-/* ===== 우측 사이드 네비게이션 ===== */
+
+/* ─── 스탯 패널 (오른쪽) ─── */
+.stat-col {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.stat-panel {
+  background:#fff;
+  border:1px solid rgba(212,0,26,0.12);
+  border-left:3px solid #d4001a;
+  border-radius:4px;
+  padding:10px 12px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+  display:none;
+  flex-direction:column;
+  gap:6px;
+}
+.stat-panel-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;
+  letter-spacing:2px;
+  color:#1a1a1a;
+  border-bottom:1px solid rgba(212,0,26,0.2);
+  padding-bottom:5px;
+}
+.stat-panel-name span {
+  font-size:11px;
+  color:#999;
+  letter-spacing:1px;
+  font-weight:400;
+  margin-left:6px;
+}
+
+/* 스탯 2×2 그리드 */
+.stats-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+.stat-block {
+  background:#fafafa;
+  border:1px solid rgba(0,0,0,0.06);
+  border-radius:3px;
+  padding:7px 8px;
+}
+.stat-block-title {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:10px;
+  color:#d4001a;
+  letter-spacing:2.5px;
+  margin-bottom:5px;
+  border-bottom:1px solid rgba(212,0,26,0.15);
+  padding-bottom:3px;
+}
+.stat-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  padding:2px 0;
+  font-size:11px;
+}
+.stat-row .sk { color:#666; }
+.stat-row .sv { font-weight:700; color:#1a1a1a; font-size:12px; }
+
+/* 포지션 블록 특수 처리 */
+.pos-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:2px 0;
+  font-size:11px;
+}
+.pos-bar-wrap {
+  flex:1;
+  height:5px;
+  background:rgba(0,0,0,0.07);
+  border-radius:3px;
+  margin:0 6px;
+  overflow:hidden;
+}
+.pos-bar {
+  height:100%;
+  background:#d4001a;
+  border-radius:3px;
+  transition:width 0.3s;
+}
+.pos-pct { font-weight:700; font-size:11px; color:#1a1a1a; min-width:32px; text-align:right; }
+
+/* ─── 빈 상태 ─── */
+.empty-stat {
+  background:#fff;
+  border:1px dashed rgba(0,0,0,0.12);
+  border-radius:4px;
+  padding:24px 12px;
+  text-align:center;
+  color:#bbb;
+  font-size:12px;
+  letter-spacing:1px;
+}
+
+/* ─── 우측 사이드 네비게이션 ─── */
 .side-nav {
   position:fixed;right:0;top:50%;transform:translateY(-50%);
   display:flex;flex-direction:column;
@@ -211,14 +317,23 @@ input[type=text]:focus { border-color:#d4001a; }
 }
 .side-nav a {
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:13px 8px;font-family:'Bebas Neue',sans-serif;font-size:8px;
-  letter-spacing:1.5px;color:#666;text-decoration:none;gap:5px;min-width:46px;
+  padding:11px 8px;font-family:'Bebas Neue',sans-serif;font-size:8px;
+  letter-spacing:1.5px;color:#666;text-decoration:none;gap:4px;min-width:44px;
   border-left:2px solid transparent;transition:color 0.15s,background 0.15s;line-height:1;
 }
 .side-nav a:hover { color:#1a1a1a;background:rgba(0,0,0,0.04); }
 .side-nav a.active { color:#d4001a;border-left-color:#d4001a;background:rgba(212,0,26,0.07); }
 .side-nav-sep { height:1px;background:rgba(0,0,0,0.08); }
-.side-nav-icon { font-size:15px;line-height:1; }
+.side-nav-icon { font-size:14px;line-height:1; }
+
+/* ─── 모바일 반응형 ─── */
+@media (max-width:580px) {
+  .main-grid {
+    grid-template-columns:1fr;
+  }
+  .fighter-col { order:2; }
+  .stat-col { order:1; }
+}
 </style>
 </head>
 <body>
@@ -232,81 +347,115 @@ input[type=text]:focus { border-color:#d4001a; }
   <a href="/mma-anim-demo.html"><span class="side-nav-icon">▶</span>DEMO</a>
 </nav>
 
+<!-- 상단 바 -->
 <div class="top-bar">
   <h1>FIGHTER DB</h1>
   <a href="/" class="btn-outline">HOME</a>
 </div>
 
 <!-- 검색 -->
-<div class="panel">
-  <h2>선수 검색 (UFC 홈페이지)</h2>
-  <div class="row">
-    <input type="text" id="nameInput" placeholder="FIGHTER NAME (EN)" />
-    <button class="btn" id="searchBtn">검색</button>
-  </div>
+<div class="search-panel">
+  <span class="search-label">검색</span>
+  <input type="text" id="nameInput" placeholder="FIGHTER NAME (EN)" />
+  <button class="btn" id="searchBtn">검색</button>
 </div>
 
 <div class="status" id="status"></div>
 
-<!-- 스탯 결과 -->
-<div class="panel" id="resultPanel" style="display:none;">
-  <h2 id="resultTitle">—</h2>
+<!-- 2열 메인 -->
+<div class="main-grid">
 
-  <div class="stat-section-title">전적</div>
-  <table class="stat-table">
-    <tr><td>총 승</td><td id="s_total_wins">—</td></tr>
-    <tr><td>총 패</td><td id="s_total_losses">—</td></tr>
-    <tr><td>KO/TKO 승</td><td id="s_ko_wins">—</td></tr>
-    <tr><td>서브미션 승</td><td id="s_sub_wins">—</td></tr>
-    <tr><td>판정 승</td><td id="s_dec_wins">—</td></tr>
-  </table>
-
-  <div class="stat-section-title">타격</div>
-  <table class="stat-table">
-    <tr><td>SLpM (분당 타격)</td><td id="s_strike_per_min">—</td></tr>
-    <tr><td>SApM (분당 피격)</td><td id="s_allowed_per_min">—</td></tr>
-    <tr><td>타격 정확도</td><td id="s_striking_accuracy">—</td></tr>
-    <tr><td>타격 방어율</td><td id="s_striking_defense">—</td></tr>
-    <tr><td>KD avg</td><td id="s_kd_avg">—</td></tr>
-  </table>
-
-  <div class="stat-section-title">레슬링 / 그래플링</div>
-  <table class="stat-table">
-    <tr><td>TD per 15min</td><td id="s_td_per_15">—</td></tr>
-    <tr><td>TD 정확도</td><td id="s_takedown_accuracy">—</td></tr>
-    <tr><td>TD 방어율</td><td id="s_takedown_defense">—</td></tr>
-    <tr><td>Sub per 15min</td><td id="s_subs_per_15">—</td></tr>
-    <tr><td>평균 경기 시간 (분)</td><td id="s_avg_fight_min">—</td></tr>
-  </table>
-
-  <div class="stat-section-title">포지션 별 중요 타격</div>
-  <table class="stat-table">
-    <thead><tr><th>포지션</th><th>횟수</th><th>비율</th></tr></thead>
-    <tbody>
-      <tr><td>스탠딩</td><td id="s_pos_standing_count">—</td><td id="s_pos_standing_pct">—</td></tr>
-      <tr><td>클린치</td><td id="s_pos_clinch_count">—</td><td id="s_pos_clinch_pct">—</td></tr>
-      <tr><td>그라운드</td><td id="s_pos_ground_count">—</td><td id="s_pos_ground_pct">—</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<button class="btn-save" id="saveBtn" style="display:none;">DB에 저장</button>
-
-<!-- 저장된 선수 목록 -->
-<div class="fighter-list">
-  <div class="fighter-list-header">
-    <span>저장된 선수</span>
-    <div style="display:flex;gap:6px;">
-      <button class="btn-outline" id="refreshBtn">새로고침</button>
-      <button class="btn-outline" id="deleteAllBtn" style="border-color:rgba(212,0,26,0.4);color:#d4001a;">전체삭제</button>
+  <!-- 왼쪽: 선수 목록 -->
+  <div class="fighter-col">
+    <div class="col-header">
+      <span class="col-header-title">저장된 선수</span>
+      <div class="col-header-actions">
+        <button class="btn-outline" id="refreshBtn">↻</button>
+        <button class="btn-outline" id="deleteAllBtn" style="border-color:rgba(212,0,26,0.35);color:#d4001a;">전체삭제</button>
+      </div>
     </div>
+    <div class="fighter-list-body" id="fighterListBody"></div>
   </div>
-  <div id="fighterListBody"></div>
-</div>
+
+  <!-- 오른쪽: 스탯 패널 -->
+  <div class="stat-col">
+
+    <!-- 비어있을 때 -->
+    <div class="empty-stat" id="emptyHint">선수를 검색하거나 목록에서 선택하세요</div>
+
+    <!-- 스탯 결과 -->
+    <div class="stat-panel" id="resultPanel">
+      <div class="stat-panel-name" id="resultTitle">—</div>
+
+      <div class="stats-grid">
+        <!-- 전적 -->
+        <div class="stat-block">
+          <div class="stat-block-title">전적</div>
+          <div class="stat-row"><span class="sk">승 / 패</span><span class="sv"><span id="s_total_wins">—</span> / <span id="s_total_losses">—</span></span></div>
+          <div class="stat-row"><span class="sk">KO/TKO</span><span class="sv" id="s_ko_wins">—</span></div>
+          <div class="stat-row"><span class="sk">서브미션</span><span class="sv" id="s_sub_wins">—</span></div>
+          <div class="stat-row"><span class="sk">판정</span><span class="sv" id="s_dec_wins">—</span></div>
+        </div>
+
+        <!-- 타격 -->
+        <div class="stat-block">
+          <div class="stat-block-title">타격</div>
+          <div class="stat-row"><span class="sk">SLpM</span><span class="sv" id="s_strike_per_min">—</span></div>
+          <div class="stat-row"><span class="sk">SApM</span><span class="sv" id="s_allowed_per_min">—</span></div>
+          <div class="stat-row"><span class="sk">정확도</span><span class="sv" id="s_striking_accuracy">—</span></div>
+          <div class="stat-row"><span class="sk">방어율</span><span class="sv" id="s_striking_defense">—</span></div>
+          <div class="stat-row"><span class="sk">KD avg</span><span class="sv" id="s_kd_avg">—</span></div>
+        </div>
+
+        <!-- 레슬링 -->
+        <div class="stat-block">
+          <div class="stat-block-title">레슬링 / 그래플링</div>
+          <div class="stat-row"><span class="sk">TD/15min</span><span class="sv" id="s_td_per_15">—</span></div>
+          <div class="stat-row"><span class="sk">TD 정확도</span><span class="sv" id="s_takedown_accuracy">—</span></div>
+          <div class="stat-row"><span class="sk">TD 방어율</span><span class="sv" id="s_takedown_defense">—</span></div>
+          <div class="stat-row"><span class="sk">Sub/15min</span><span class="sv" id="s_subs_per_15">—</span></div>
+          <div class="stat-row"><span class="sk">평균 경기(분)</span><span class="sv" id="s_avg_fight_min">—</span></div>
+        </div>
+
+        <!-- 포지션 -->
+        <div class="stat-block">
+          <div class="stat-block-title">포지션 별 타격</div>
+          <div class="pos-row">
+            <span class="sk" style="min-width:42px;font-size:11px;">스탠딩</span>
+            <div class="pos-bar-wrap"><div class="pos-bar" id="s_pos_standing_bar" style="width:0%"></div></div>
+            <span class="pos-pct" id="s_pos_standing_pct">—</span>
+          </div>
+          <div class="pos-row">
+            <span class="sk" style="min-width:42px;font-size:11px;">클린치</span>
+            <div class="pos-bar-wrap"><div class="pos-bar" id="s_pos_clinch_bar" style="width:0%"></div></div>
+            <span class="pos-pct" id="s_pos_clinch_pct">—</span>
+          </div>
+          <div class="pos-row">
+            <span class="sk" style="min-width:42px;font-size:11px;">그라운드</span>
+            <div class="pos-bar-wrap"><div class="pos-bar" id="s_pos_ground_bar" style="width:0%"></div></div>
+            <span class="pos-pct" id="s_pos_ground_pct">—</span>
+          </div>
+          <div class="stat-row" style="margin-top:4px;border-top:1px solid rgba(0,0,0,0.05);padding-top:4px;">
+            <span class="sk">스탠딩 횟수</span><span class="sv" id="s_pos_standing_count">—</span>
+          </div>
+          <div class="stat-row">
+            <span class="sk">클린치 횟수</span><span class="sv" id="s_pos_clinch_count">—</span>
+          </div>
+          <div class="stat-row">
+            <span class="sk">그라운드 횟수</span><span class="sv" id="s_pos_ground_count">—</span>
+          </div>
+        </div>
+      </div><!-- /stats-grid -->
+
+      <button class="btn-save" id="saveBtn" style="display:none;">DB에 저장</button>
+    </div><!-- /stat-panel -->
+
+  </div><!-- /stat-col -->
+</div><!-- /main-grid -->
 
 <script>
 var _current = null;
-var _savedData = {};  // slug → row 캐시
+var _savedData = {};
 
 function showStatus(msg, type) {
   var el = document.getElementById('status');
@@ -318,21 +467,27 @@ function showStatus(msg, type) {
 function pct(v) { return (v * 100).toFixed(1) + '%'; }
 function fix2(v) { return parseFloat(v).toFixed(2); }
 
-function fillStats(d) {
-  // d는 /api/fighter 응답 또는 저장된 row
-  var isRaw = !!d.raw;  // API 응답이면 raw/position/target 구조, DB row면 flat 구조
+function setBar(id, pct) {
+  var el = document.getElementById(id);
+  if (el) el.style.width = (pct || 0) + '%';
+}
 
-  var title = (d.slug || '').toUpperCase().replace(/-/g,' ') + '  ·  ' + (d.weightClass || d.weight_class || '');
-  document.getElementById('resultTitle').textContent = title;
+function fillStats(d) {
+  var isRaw = !!d.raw;
+
+  var wc = (d.weightClass || d.weight_class || '');
+  var name = (d.slug || '').toUpperCase().replace(/-/g,' ');
+  document.getElementById('resultTitle').innerHTML =
+    name + (wc ? '<span>' + wc + '</span>' : '');
 
   if (isRaw) {
     var r = d.raw, pos = d.position;
     document.getElementById('s_total_wins').textContent   = r.total_wins;
     document.getElementById('s_total_losses').textContent = r.total_losses;
     var wm = d.winMethod;
-    document.getElementById('s_ko_wins').textContent      = r.ko_wins  + (wm ? ' (' + wm.koBar.pct  + '%)' : '');
-    document.getElementById('s_sub_wins').textContent     = r.sub_wins + (wm ? ' (' + wm.subBar.pct + '%)' : '');
-    document.getElementById('s_dec_wins').textContent     = r.dec_wins + (wm ? ' (' + wm.decBar.pct + '%)' : '');
+    document.getElementById('s_ko_wins').textContent  = r.ko_wins  + (wm ? ' (' + wm.koBar.pct  + '%)' : '');
+    document.getElementById('s_sub_wins').textContent  = r.sub_wins + (wm ? ' (' + wm.subBar.pct + '%)' : '');
+    document.getElementById('s_dec_wins').textContent  = r.dec_wins + (wm ? ' (' + wm.decBar.pct + '%)' : '');
     document.getElementById('s_strike_per_min').textContent   = fix2(r.strikePerMin);
     document.getElementById('s_allowed_per_min').textContent  = fix2(r.allowedPerMin);
     document.getElementById('s_striking_accuracy').textContent = pct(r.striking_accuracy);
@@ -344,18 +499,20 @@ function fillStats(d) {
     document.getElementById('s_subs_per_15').textContent       = fix2(r.subs_per_15);
     document.getElementById('s_avg_fight_min').textContent     = fix2(r.avg_fight_min);
     document.getElementById('s_pos_standing_count').textContent = pos.posStanding.count;
-    document.getElementById('s_pos_standing_pct').textContent   = pos.posStanding.pct + '%';
     document.getElementById('s_pos_clinch_count').textContent   = pos.posClinch.count;
-    document.getElementById('s_pos_clinch_pct').textContent     = pos.posClinch.pct + '%';
     document.getElementById('s_pos_ground_count').textContent   = pos.posGround.count;
+    document.getElementById('s_pos_standing_pct').textContent   = pos.posStanding.pct + '%';
+    document.getElementById('s_pos_clinch_pct').textContent     = pos.posClinch.pct + '%';
     document.getElementById('s_pos_ground_pct').textContent     = pos.posGround.pct + '%';
+    setBar('s_pos_standing_bar', pos.posStanding.pct);
+    setBar('s_pos_clinch_bar',   pos.posClinch.pct);
+    setBar('s_pos_ground_bar',   pos.posGround.pct);
   } else {
-    // DB row: flat 구조
     document.getElementById('s_total_wins').textContent   = d.total_wins;
     document.getElementById('s_total_losses').textContent = d.total_losses;
-    document.getElementById('s_ko_wins').textContent      = d.ko_wins  + (d.ko_wins_pct  ? ' (' + d.ko_wins_pct  + '%)' : '');
-    document.getElementById('s_sub_wins').textContent     = d.sub_wins + (d.sub_wins_pct ? ' (' + d.sub_wins_pct + '%)' : '');
-    document.getElementById('s_dec_wins').textContent     = d.dec_wins + (d.dec_wins_pct ? ' (' + d.dec_wins_pct + '%)' : '');
+    document.getElementById('s_ko_wins').textContent  = d.ko_wins  + (d.ko_wins_pct  ? ' (' + d.ko_wins_pct  + '%)' : '');
+    document.getElementById('s_sub_wins').textContent  = d.sub_wins + (d.sub_wins_pct ? ' (' + d.sub_wins_pct + '%)' : '');
+    document.getElementById('s_dec_wins').textContent  = d.dec_wins + (d.dec_wins_pct ? ' (' + d.dec_wins_pct + '%)' : '');
     document.getElementById('s_strike_per_min').textContent   = fix2(d.strike_per_min);
     document.getElementById('s_allowed_per_min').textContent  = fix2(d.allowed_per_min);
     document.getElementById('s_striking_accuracy').textContent = pct(d.striking_accuracy);
@@ -367,15 +524,18 @@ function fillStats(d) {
     document.getElementById('s_subs_per_15').textContent       = fix2(d.subs_per_15);
     document.getElementById('s_avg_fight_min').textContent     = fix2(d.avg_fight_min);
     document.getElementById('s_pos_standing_count').textContent = d.pos_standing_count ?? '—';
-    document.getElementById('s_pos_standing_pct').textContent   = d.pos_standing_pct != null ? d.pos_standing_pct + '%' : '—';
     document.getElementById('s_pos_clinch_count').textContent   = d.pos_clinch_count ?? '—';
-    document.getElementById('s_pos_clinch_pct').textContent     = d.pos_clinch_pct != null ? d.pos_clinch_pct + '%' : '—';
     document.getElementById('s_pos_ground_count').textContent   = d.pos_ground_count ?? '—';
+    document.getElementById('s_pos_standing_pct').textContent   = d.pos_standing_pct != null ? d.pos_standing_pct + '%' : '—';
+    document.getElementById('s_pos_clinch_pct').textContent     = d.pos_clinch_pct != null ? d.pos_clinch_pct + '%' : '—';
     document.getElementById('s_pos_ground_pct').textContent     = d.pos_ground_pct != null ? d.pos_ground_pct + '%' : '—';
+    setBar('s_pos_standing_bar', d.pos_standing_pct || 0);
+    setBar('s_pos_clinch_bar',   d.pos_clinch_pct   || 0);
+    setBar('s_pos_ground_bar',   d.pos_ground_pct   || 0);
   }
 
+  document.getElementById('emptyHint').style.display = 'none';
   document.getElementById('resultPanel').style.display = 'flex';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // 검색
@@ -449,14 +609,12 @@ document.getElementById('saveBtn').addEventListener('click', function() {
     });
 });
 
-// 활성 행 표시
 function setActive(slug) {
   document.querySelectorAll('.fighter-row').forEach(function(el) {
     el.classList.toggle('active', el.dataset.slug === slug);
   });
 }
 
-// 목록 로드
 function loadFighters() {
   fetch('/api/ufc-fighters')
     .then(function(r) { return r.json(); })
@@ -466,25 +624,21 @@ function loadFighters() {
 
       var el = document.getElementById('fighterListBody');
       if (!rows.length) {
-        el.innerHTML = '<div style="color:#aaa;font-size:13px;padding:8px 0;">저장된 선수 없음</div>';
+        el.innerHTML = '<div style="color:#bbb;font-size:11px;padding:6px 2px;letter-spacing:0.5px;">저장된 선수 없음</div>';
         return;
       }
       el.innerHTML = rows.map(function(f) {
-        var date = new Date(f.fetched_at).toLocaleDateString('ko-KR');
         return '<div class="fighter-row" data-slug="' + f.slug + '">' +
-          '<div onclick="openSaved(\'' + f.slug + '\')" style="flex:1;">' +
+          '<div onclick="openSaved(\'' + f.slug + '\')" style="flex:1;min-width:0;">' +
             '<div class="fname">' + f.name.toUpperCase() + '</div>' +
-            '<div class="fmeta">' + (f.weight_class || '—') + ' · ' + f.total_wins + 'W ' + f.total_losses + 'L · ' + date + '</div>' +
+            '<div class="fmeta">' + (f.weight_class || '—') + ' · ' + f.total_wins + 'W ' + f.total_losses + 'L</div>' +
           '</div>' +
-          '<div class="row-actions">' +
-            '<button class="btn-del" onclick="deleteFighter(event,\'' + f.slug + '\',\'' + f.name + '\')">삭제</button>' +
-          '</div>' +
+          '<button class="btn-del" onclick="deleteFighter(event,\'' + f.slug + '\',\'' + f.name + '\')">DEL</button>' +
         '</div>';
       }).join('');
     });
 }
 
-// 저장된 선수 보기
 function openSaved(slug) {
   var f = _savedData[slug];
   if (!f) return;
@@ -495,7 +649,6 @@ function openSaved(slug) {
   setActive(slug);
 }
 
-// 삭제
 function deleteFighter(e, slug, name) {
   e.stopPropagation();
   if (!confirm(name + ' 삭제할까요?')) return;
@@ -503,9 +656,9 @@ function deleteFighter(e, slug, name) {
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (res.ok) {
-        // 현재 표시 중이면 패널 닫기
         if (document.querySelector('.fighter-row.active[data-slug="' + slug + '"]')) {
           document.getElementById('resultPanel').style.display = 'none';
+          document.getElementById('emptyHint').style.display = 'block';
         }
         loadFighters();
       }
@@ -523,6 +676,7 @@ document.getElementById('deleteAllBtn').addEventListener('click', function() {
     .then(function(res) {
       if (res.ok) {
         document.getElementById('resultPanel').style.display = 'none';
+        document.getElementById('emptyHint').style.display = 'block';
         showStatus('✓ 전체 삭제 완료', 'ok');
         loadFighters();
       } else {
@@ -531,6 +685,7 @@ document.getElementById('deleteAllBtn').addEventListener('click', function() {
     })
     .catch(function() { showStatus('삭제 중 오류.', 'err'); });
 });
+
 document.getElementById('nameInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('searchBtn').click();
 });
