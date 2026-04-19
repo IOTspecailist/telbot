@@ -181,6 +181,46 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
   letter-spacing:1px;
   padding:8px 0;
 }
+.btn-bulk {
+  padding:6px 14px;
+  background:#fff;
+  border:1px solid rgba(212,0,26,0.35);
+  border-radius:3px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;
+  letter-spacing:1.5px;
+  color:#d4001a;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.btn-bulk:hover { background:#d4001a; color:#fff; }
+.btn-bulk:disabled { background:#eee; color:#aaa; border-color:#ddd; cursor:default; }
+.bulk-progress {
+  display:none;
+  width:100%;
+  margin-top:8px;
+}
+.bulk-bar-track {
+  width:100%;
+  height:4px;
+  background:rgba(0,0,0,0.08);
+  border-radius:2px;
+  overflow:hidden;
+  margin-bottom:5px;
+}
+.bulk-bar-fill {
+  height:100%;
+  background:#d4001a;
+  border-radius:2px;
+  transition:width 0.2s;
+  width:0%;
+}
+.bulk-status-text {
+  font-size:11px;
+  color:#888;
+  letter-spacing:0.5px;
+  font-weight:700;
+}
 /* ===== 우측 사이드 네비게이션 ===== */
 .side-nav {
   position:fixed;right:0;top:50%;transform:translateY(-50%);
@@ -308,6 +348,11 @@ select:focus { border-color:#d4001a; }
 <div class="saved-section" id="savedSection">
   <div class="saved-header">
     <span>저장된 카드</span>
+    <button class="btn-bulk" id="bulkBtn">DB 일괄 생성</button>
+  </div>
+  <div class="bulk-progress" id="bulkProgress">
+    <div class="bulk-bar-track"><div class="bulk-bar-fill" id="bulkBarFill"></div></div>
+    <div class="bulk-status-text" id="bulkStatusText"></div>
   </div>
   <div id="cardList" class="card-list">
     <span class="no-cards">아직 저장된 카드가 없습니다</span>
@@ -924,6 +969,134 @@ function redraw() {
     draw();
   }
 }
+
+// ── DB 일괄 생성 ──
+document.getElementById('bulkBtn').addEventListener('click', function() {
+  if (!confirm('DB에 저장된 선수 전체의 카드를 생성합니다.\n이미 같은 이름의 카드가 있으면 건너뜁니다.\n계속할까요?')) return;
+
+  var bulkBtn = document.getElementById('bulkBtn');
+  var progress = document.getElementById('bulkProgress');
+  var barFill = document.getElementById('bulkBarFill');
+  var statusText = document.getElementById('bulkStatusText');
+
+  bulkBtn.disabled = true;
+  progress.style.display = 'block';
+  statusText.textContent = '선수 목록 불러오는 중...';
+
+  // 애니메이션 루프 중단
+  if (_animId) { cancelAnimationFrame(_animId); _animId = null; }
+
+  var allFighters = [];
+  var existingNames = new Set();
+  var done = 0, skipped = 0, failed = 0;
+
+  function updateBar(current, total) {
+    var pct = total > 0 ? Math.round(current / total * 100) : 0;
+    barFill.style.width = pct + '%';
+    statusText.textContent = current + ' / ' + total + ' 완료' +
+      (skipped > 0 ? ' · ' + skipped + ' 스킵' : '') +
+      (failed > 0 ? ' · ' + failed + ' 실패' : '');
+  }
+
+  function makeCard(fighter, data) {
+    // STATS 값 설정
+    var keyMap = {
+      fightiq:'fightiq', power:'power',
+      strikingOffense:'strikingOffense', wrestlingOffense:'wrestlingOffense',
+      wrestlingDefense:'wrestlingDefense', strikingDefense:'strikingDefense',
+      cardio:'cardio', jiujitsu:'jiujitsu'
+    };
+    STATS.forEach(function(s) {
+      var v = data.scores ? data.scores[keyMap[s.key]] : undefined;
+      s.val = (v !== undefined) ? v : 5;
+      document.getElementById('n_' + s.key).textContent = s.val;
+    });
+
+    // 이름·체급 설정
+    document.getElementById('nameInput').value = fighter.name || fighter.slug;
+    var sel = document.getElementById('weightClassSelect');
+    var wc = data.weightClass || fighter.weight_class || '';
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === wc) { sel.selectedIndex = i; break; }
+    }
+
+    // Canvas 렌더링
+    draw();
+
+    // 썸네일 생성
+    var canvas = document.getElementById('canvas');
+    var thumb = document.createElement('canvas');
+    thumb.width = 88;
+    thumb.height = Math.round(88 * canvas.height / canvas.width);
+    thumb.getContext('2d').drawImage(canvas, 0, 0, thumb.width, thumb.height);
+
+    return {
+      id: Date.now().toString() + '_' + done,
+      name: fighter.name || fighter.slug,
+      weight_class: wc,
+      raw_stats: data.raw || null,
+      scores: data.scores || null,
+      image: thumb.toDataURL('image/jpeg', 0.82)
+    };
+  }
+
+  function delay(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+  async function runBulk() {
+    // 1) DB 선수 목록
+    var fighters = await fetch('/api/ufc-fighters').then(function(r) { return r.json(); });
+    // 2) 기존 카드 목록
+    var cards = await fetch('/api/cards').then(function(r) { return r.json(); });
+    cards.forEach(function(c) { existingNames.add(c.name.toLowerCase()); });
+
+    var toGen = fighters.filter(function(f) {
+      return !existingNames.has((f.name || '').toLowerCase());
+    });
+    skipped = fighters.length - toGen.length;
+
+    statusText.textContent = toGen.length + '명 생성 시작 (' + skipped + '명 스킵)...';
+    updateBar(0, toGen.length);
+
+    for (var i = 0; i < toGen.length; i++) {
+      var fighter = toGen[i];
+      statusText.textContent = '(' + (i+1) + '/' + toGen.length + ') ' + (fighter.name || fighter.slug) + ' 처리 중...';
+      try {
+        var res = await fetch('/api/ufc-fighters/' + encodeURIComponent(fighter.slug));
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'failed');
+
+        var card = makeCard(fighter, data);
+
+        var saveRes = await fetch('/api/cards', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(card)
+        });
+        if (!saveRes.ok) throw new Error('save failed');
+
+        done++;
+      } catch(e) {
+        failed++;
+      }
+      updateBar(done + failed, toGen.length);
+      await delay(120); // 서버 부하 방지
+    }
+
+    // 완료
+    statusText.textContent = '완료! ' + done + '명 생성' +
+      (skipped > 0 ? ' · ' + skipped + '명 스킵' : '') +
+      (failed > 0 ? ' · ' + failed + '명 실패' : '');
+    barFill.style.background = '#1a6b1a';
+    bulkBtn.disabled = false;
+    renderSavedCards();
+    redraw();
+  }
+
+  runBulk().catch(function(e) {
+    statusText.textContent = '오류: ' + e.message;
+    bulkBtn.disabled = false;
+  });
+});
 
 window.onload = function() {
   redraw();
