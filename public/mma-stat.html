@@ -14,13 +14,41 @@ body {
   font-family:'Barlow Condensed',sans-serif;
   padding:16px;
   display:flex;
+  justify-content:center;
+  gap:16px;
+  min-height:100vh;
+  align-items:flex-start;
+}
+
+/* ─── 왼쪽 메인 컬럼 ─── */
+.main-col {
+  display:flex;
   flex-direction:column;
   align-items:center;
   gap:12px;
+  flex-shrink:0;
+  width:420px;
+}
+
+/* ─── 오른쪽 카드 패널 ─── */
+.cards-col {
+  width:280px;
+  flex-shrink:0;
+  position:sticky;
+  top:16px;
+  max-height:calc(100vh - 32px);
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  background:#fff;
+  border:1px solid rgba(212,0,26,0.15);
+  border-left:3px solid #d4001a;
+  border-radius:4px;
+  box-shadow:0 1px 6px rgba(0,0,0,0.06);
+  overflow:hidden;
 }
 .panel {
   width:100%;
-  max-width:420px;
   background:#fff;
   border:1px solid rgba(212,0,26,0.15);
   border-left:3px solid #d4001a;
@@ -65,10 +93,9 @@ input[type=range] { width:100%; accent-color:#d4001a; }
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
-canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shadow:0 2px 12px rgba(0,0,0,0.15); }
+canvas { width:100%; border-radius:4px; display:block; box-shadow:0 2px 12px rgba(0,0,0,0.15); }
 .btn {
   width:100%;
-  max-width:420px;
   padding:14px;
   background:#d4001a;
   border:none;
@@ -83,7 +110,6 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
 .hint {
   display:none;
   width:100%;
-  max-width:420px;
   padding:10px;
   text-align:center;
   font-size:13px;
@@ -97,12 +123,10 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
 #outImg {
   display:none;
   width:100%;
-  max-width:420px;
   border-radius:4px;
 }
 .btn-secondary {
   width:100%;
-  max-width:420px;
   padding:11px;
   background:#fff;
   border:1px solid rgba(0,0,0,0.15);
@@ -115,28 +139,62 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
 }
 .btn-secondary:hover { border-color:#d4001a; color:#d4001a; }
 .saved-section {
-  width:100%;
-  max-width:420px;
+  display:none; /* 모바일에서만 사용 */
 }
-.saved-header {
+/* 오른쪽 카드 패널 헤더 */
+.cards-col-header {
+  padding:10px 12px 8px;
+  border-bottom:1px solid rgba(212,0,26,0.12);
+  flex-shrink:0;
+}
+.cards-col-header-top {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:10px;
+  margin-bottom:6px;
 }
-.saved-header span {
+.cards-col-header-top span {
   font-family:'Bebas Neue',sans-serif;
-  font-size:13px;
+  font-size:12px;
   color:#d4001a;
-  letter-spacing:3px;
+  letter-spacing:2.5px;
 }
+.bulk-progress {
+  display:none;
+  padding:0 12px 6px;
+  flex-shrink:0;
+  border-bottom:1px solid rgba(0,0,0,0.06);
+}
+.bulk-bar-track {
+  width:100%;
+  height:3px;
+  background:rgba(0,0,0,0.08);
+  border-radius:2px;
+  overflow:hidden;
+  margin-bottom:4px;
+}
+.bulk-bar-fill {
+  height:100%;
+  background:#d4001a;
+  border-radius:2px;
+  transition:width 0.2s;
+  width:0%;
+}
+.bulk-status-text {
+  font-size:10px;
+  color:#888;
+  letter-spacing:0.5px;
+  font-weight:700;
+}
+/* 카드 목록 스크롤 영역 */
 .card-list {
   display:flex;
   flex-wrap:wrap;
-  gap:10px;
-  max-height:320px;
+  gap:8px;
+  padding:10px;
   overflow-y:auto;
-  padding-right:4px;
+  flex:1;
+  align-content:flex-start;
   scrollbar-width:thin;
   scrollbar-color:rgba(212,0,26,0.3) transparent;
 }
@@ -153,10 +211,11 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
 }
 .card-item img {
   display:block;
-  width:88px;
-  height:120px;
+  width:116px;
+  height:158px;
   border-radius:3px;
   border:2px solid rgba(0,0,0,0.08);
+  object-fit:cover;
 }
 .card-item:hover img { border-color:#d4001a; }
 .card-item .card-name {
@@ -165,7 +224,7 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
   color:#777;
   text-align:center;
   letter-spacing:1px;
-  max-width:88px;
+  max-width:116px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -194,44 +253,31 @@ canvas { width:100%; max-width:420px; border-radius:4px; display:block; box-shad
   padding:8px 0;
 }
 .btn-bulk {
-  padding:6px 14px;
+  padding:5px 10px;
   background:#fff;
   border:1px solid rgba(212,0,26,0.35);
   border-radius:3px;
   font-family:'Bebas Neue',sans-serif;
-  font-size:11px;
-  letter-spacing:1.5px;
+  font-size:10px;
+  letter-spacing:1px;
   color:#d4001a;
   cursor:pointer;
   white-space:nowrap;
 }
 .btn-bulk:hover { background:#d4001a; color:#fff; }
 .btn-bulk:disabled { background:#eee; color:#aaa; border-color:#ddd; cursor:default; }
-.bulk-progress {
-  display:none;
-  width:100%;
-  margin-top:8px;
-}
-.bulk-bar-track {
-  width:100%;
-  height:4px;
-  background:rgba(0,0,0,0.08);
-  border-radius:2px;
-  overflow:hidden;
-  margin-bottom:5px;
-}
-.bulk-bar-fill {
-  height:100%;
-  background:#d4001a;
-  border-radius:2px;
-  transition:width 0.2s;
-  width:0%;
-}
-.bulk-status-text {
-  font-size:11px;
-  color:#888;
-  letter-spacing:0.5px;
-  font-weight:700;
+
+/* 모바일 반응형 */
+@media (max-width:780px) {
+  body { flex-direction:column; align-items:center; padding:12px; }
+  .main-col { width:100%; max-width:420px; }
+  .cards-col {
+    position:static;
+    width:100%;
+    max-width:420px;
+    max-height:360px;
+  }
+  .saved-section { display:none; }
 }
 /* ===== 우측 사이드 네비게이션 ===== */
 .side-nav {
@@ -309,58 +355,64 @@ select:focus { border-color:#d4001a; }
   <a href="/mma-anim-demo.html"><span class="side-nav-icon">▶</span>DEMO</a>
 </nav>
 
-<div style="width:100%;max-width:420px;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-  <a href="/" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#888;text-decoration:none;">⌂ HOME</a>
-  <a href="/mma-predict.html" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#d4001a;text-decoration:none;">승자 예측 →</a>
-</div>
-
-<div class="panel">
-  <h2>FIGHTER SEARCH</h2>
-  <div style="display:flex;gap:10px;align-items:center;">
-    <input type="text" id="nameInput" placeholder="FIGHTER NAME (e.g. Islam Makhachev)" style="flex:1;">
-    <button class="btn-search" id="searchBtn">검색</button>
+<!-- 왼쪽 메인 컬럼 -->
+<div class="main-col">
+  <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
+    <a href="/" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#888;text-decoration:none;">⌂ HOME</a>
+    <a href="/mma-predict.html" style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#d4001a;text-decoration:none;">승자 예측 →</a>
   </div>
-  <div class="search-status" id="searchStatus" style="display:none;"></div>
+
+  <div class="panel">
+    <h2>FIGHTER SEARCH</h2>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="text" id="nameInput" placeholder="FIGHTER NAME (e.g. Islam Makhachev)" style="flex:1;">
+      <button class="btn-search" id="searchBtn">검색</button>
+    </div>
+    <div class="search-status" id="searchStatus" style="display:none;"></div>
+  </div>
+
+  <div class="panel" id="confirmPanel" style="display:none;">
+    <h2>WEIGHT CLASS / YEAR</h2>
+    <select id="weightClassSelect">
+      <option value="Strawweight">Strawweight (115)</option>
+      <option value="Flyweight">Flyweight (125)</option>
+      <option value="Bantamweight">Bantamweight (135)</option>
+      <option value="Featherweight">Featherweight (145)</option>
+      <option value="Lightweight" selected>Lightweight (155)</option>
+      <option value="Welterweight">Welterweight (170)</option>
+      <option value="Middleweight">Middleweight (185)</option>
+      <option value="Light Heavyweight">Light Heavyweight (205)</option>
+      <option value="Heavyweight">Heavyweight (265)</option>
+    </select>
+    <input type="text" id="yearInput" value="2025" placeholder="YEAR" style="width:100%;color:#ffd700;text-align:center;margin-top:4px;">
+  </div>
+
+  <div class="panel">
+    <h2>STATS — RADAR (AUTO)</h2>
+    <div class="grid" id="statGrid"></div>
+  </div>
+
+  <div class="panel">
+    <h2>EXTRA STATS — TABLE ONLY (1-10)</h2>
+    <div class="extra-grid" id="extraGrid"></div>
+  </div>
+
+  <canvas id="canvas" width="480" height="650"></canvas>
+
+  <button class="btn" id="createBtn">카드 생성</button>
+  <button class="btn-secondary" id="saveBtn">IMAGE SAVE</button>
+
+  <div class="hint" id="hint">아래 이미지를 길게 눌러서 저장하세요</div>
+  <img id="outImg" alt="Fighter Profile">
 </div>
 
-<div class="panel" id="confirmPanel" style="display:none;">
-  <h2>WEIGHT CLASS / YEAR</h2>
-  <select id="weightClassSelect">
-    <option value="Strawweight">Strawweight (115)</option>
-    <option value="Flyweight">Flyweight (125)</option>
-    <option value="Bantamweight">Bantamweight (135)</option>
-    <option value="Featherweight">Featherweight (145)</option>
-    <option value="Lightweight" selected>Lightweight (155)</option>
-    <option value="Welterweight">Welterweight (170)</option>
-    <option value="Middleweight">Middleweight (185)</option>
-    <option value="Light Heavyweight">Light Heavyweight (205)</option>
-    <option value="Heavyweight">Heavyweight (265)</option>
-  </select>
-  <input type="text" id="yearInput" value="2025" placeholder="YEAR" style="width:100%;color:#ffd700;text-align:center;margin-top:4px;">
-</div>
-
-<div class="panel">
-  <h2>STATS — RADAR (AUTO)</h2>
-  <div class="grid" id="statGrid"></div>
-</div>
-
-<div class="panel">
-  <h2>EXTRA STATS — TABLE ONLY (1-10)</h2>
-  <div class="extra-grid" id="extraGrid"></div>
-</div>
-
-<canvas id="canvas" width="480" height="650"></canvas>
-
-<button class="btn" id="createBtn">카드 생성</button>
-<button class="btn-secondary" id="saveBtn">IMAGE SAVE</button>
-
-<div class="hint" id="hint">아래 이미지를 길게 눌러서 저장하세요</div>
-<img id="outImg" alt="Fighter Profile">
-
-<div class="saved-section" id="savedSection">
-  <div class="saved-header">
-    <span>저장된 카드</span>
-    <button class="btn-bulk" id="bulkBtn">DB 일괄 생성</button>
+<!-- 오른쪽 카드 패널 -->
+<div class="cards-col">
+  <div class="cards-col-header">
+    <div class="cards-col-header-top">
+      <span>저장된 카드</span>
+      <button class="btn-bulk" id="bulkBtn">DB 일괄 생성</button>
+    </div>
   </div>
   <div class="bulk-progress" id="bulkProgress">
     <div class="bulk-bar-track"><div class="bulk-bar-fill" id="bulkBarFill"></div></div>
