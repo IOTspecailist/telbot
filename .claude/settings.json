@@ -1,0 +1,20 @@
+{
+  "enabledPlugins": {
+    "telegram@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import sys,json,re,subprocess; d=json.load(sys.stdin); f=d.get('tool_input',{}).get('file_path',''); r=re.search(r'\\\\.(ts|tsx)$',f) if f else None; out=(lambda res: res.stdout+res.stderr)(subprocess.run('npx tsc --noEmit --pretty false',shell=True,capture_output=True,text=True,cwd='C:/VSC_Claude/telbot')) if r else ''; print('TS check: ' + (out.strip()[-600:] if out.strip() else 'OK')) if r else None\"",
+            "statusMessage": "TS 타입 검사 중...",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

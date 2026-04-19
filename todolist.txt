@@ -1,0 +1,83 @@
+== 기존 TODO ==
+
+1. 봇 탐지 못하게
+2. 나만 사용가능하게 이메일로그인 기능 추가?
+3. 실제 사용할 알림만들기( 특정시간마다 나오게 )
+4. MMA 카드 데이터 DB 저장 — 현재 localStorage 기반을 Vercel + Postgres(Vercel 연동)로 이전
+   - 목표: 다른 브라우저/기기에서도 동일한 카드 데이터 조회 가능
+   - 서버: Vercel
+   - DB: Vercel에 이미 연동된 Postgres 사용 예정
+
+5. [완료] fighter-score.ts 능력치 항목 개편
+
+6. Power(9점 미만 구간) 및 Fight IQ 공식 수정
+   - Fight IQ 기준 선수: Jon Jones=10, Volkanovski=9, Topuria=9, Michael Chandler=3(근사치)
+   - 현재 Power 9점 미만 구간이 기대값과 다름 → 스케일/보정 재조정 필요
+
+7. mma-stat.html 조회 항목 확장
+   - mma-fighter-db.html과 동일하게 position + winMethod 도 가져오도록 수정
+
+8. Power / Cardio / Fight IQ 계산 로직 정의
+   - 현재 fighter-score.ts에 구현된 공식 검토 및 기준 재정의
+
+
+== 아키텍처 개선 TODO (2026-04-19 점검) ==
+
+[우선순위 높음]
+
+A. public/*.html → Next.js App Router 페이지 이전
+   - 현재 mma-stat.html, mma-fighter-db.html, mma-predict.html, mma-anim-demo.html이
+     /public에 vanilla JS로 존재 → TypeScript 없음, 공유 컴포넌트 불가
+   - 이전 시 얻는 것:
+     · fighter-score.ts calcScores()를 HTML에서 직접 호출 가능 (API 왕복 제거)
+     · SideNav, 버튼 등 공통 컴포넌트 단일화
+     · Canvas 카드 드로잉 로직을 React useRef 컴포넌트로 분리
+     · 빌드 타임 타입 오류 감지
+   - 목표 구조:
+     app/mma/stat/page.tsx
+     app/mma/fighter-db/page.tsx
+     app/mma/predict/page.tsx
+     components/FighterCard.tsx  (Canvas 로직)
+     components/SideNav.tsx      (현재 4개 파일에 복붙된 nav)
+
+B. 카드 이미지 → Vercel Blob 이전
+   - 현재: base64 이미지를 PostgreSQL mma_cards 테이블에 직접 저장
+   - 문제: 111명 × ~10KB = DB가 이미지 저장소가 됨, 쿼리 느려짐
+   - 변경: @vercel/blob으로 업로드 후 URL만 DB에 저장
+   - import { put } from '@vercel/blob'
+
+[우선순위 중간]
+
+C. send-* API 8개 → /api/notify 단일 엔드포인트로 통합
+   - 현재: /api/send-weather, /api/send-trends, /api/send-lunar 등 8개 별도 route
+   - /api/notify에 이미 레지스트리 패턴 있음 → 나머지 route들이 불필요하게 중복
+   - 정리 후 /api/notify { type: '...' } 하나만 유지
+
+D. 트렌드/날씨 스크래핑에 fetch 캐시 레이어 추가
+   - 현재: 매 요청마다 외부 크롤링 (UFC, Zum, X트렌드 등)
+   - 문제: 사이트 HTML 구조 바뀌면 전체 UI 빈칸, 동시 다중 요청 시 중복 크롤링
+   - 변경: Next.js fetch cache 활용 (next: { revalidate: 60 })
+   - 크롤링 실패 시 마지막 성공 캐시 반환하는 fallback 로직 추가
+
+[우선순위 낮음]
+
+E. TypeScript 타입 강화
+   - lib/notifications/index.ts 레지스트리를 discriminated union으로 타입 강화
+   - API 응답 타입을 공유 types/ 폴더에 정의 (현재 각 파일에 분산)
+
+F. 에러 트래킹
+   - 현재 console.error만 존재, 크롤링 실패 감지 불가
+   - Vercel의 빌트인 로그 또는 간단한 Telegram 오류 알림 연동
+
+
+== Claude 자동화 설정 (2026-04-19 적용) ==
+
+[훅]
+- PostToolUse / Edit|Write: .ts/.tsx 파일 수정 시 tsc --noEmit 자동 실행
+
+[스킬]
+- /check-scrapers : UFC, Zum, X트렌드 등 크롤링 소스 동작 여부 일괄 점검
+- /scaffold-notify : 새 알림 타입 파일 스캐폴딩 (notification-dev 에이전트 호출)
+
+[에이전트]
+- scraper-health : 크롤링 소스 상태 점검 전문 에이전트
